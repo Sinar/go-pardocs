@@ -17,3 +17,7 @@ go-pardocs
 # Ignore direnv
 .envrc*
 
+# Ignore raw + split  folders
+raw/*
+split/*
+
