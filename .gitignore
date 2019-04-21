@@ -21,3 +21,6 @@ go-pardocs
 raw/*
 split/*
 
+# Ignore Goland
+.idea/*
+
