@@ -1,5 +1,8 @@
-build:
-	go build .
+run: build
+	@./go-pardocs
+    
+build: test
+	@go build .
 
 test:
-	go test .
+	@go test .

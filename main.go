@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/davecgh/go-spew/spew"
+	"github.com/Sinar/go-pardocs/cmd"
 )
 
 func main() {
@@ -12,5 +12,6 @@ func main() {
 
 	flag.Parse()
 
-	spew.Println("bob")
+	cmd.SplitBukanLisanPDFs()
+
 }
