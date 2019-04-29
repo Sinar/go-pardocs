@@ -9,6 +9,8 @@ Assumes:
 
 ## IMPORTANT!
 
+Issue for the below is tracked at: https://github.com/hhrutter/pdfcpu/issues/80
+
 It does seem that the new Written Questions in [Parlimen Malaysia](http://www.parlimen.gov.my/files/jindex/pdf/Pertanyaan%20Jawapan%20Bukan%20Lisan%2022019.pdf) 
 is not purely PDF 1.4 compliant.  You may need to do the following workaround as the pdfcpu library we use does a validation 
 for the expressed PDF version.
