@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/unidoc/unidoc/pdf/extractor"
+
 	"github.com/pkg/errors"
 
 	"github.com/davecgh/go-spew/spew"
@@ -12,6 +14,8 @@ import (
 	"github.com/hhrutter/pdfcpu/pkg/pdfcpu"
 	"github.com/hhrutter/pdfcpu/pkg/pdfcpu/validate"
 	"github.com/ledongthuc/pdf"
+
+	unidoc "github.com/unidoc/unidoc/pdf/model"
 )
 
 // All extracted from pdfcpu .. da best!
@@ -202,36 +206,44 @@ func recognizeNewPage(currentPage *pdf.Page) {
 // SamplePDFPages will extract out source PDF, sample numberOfPages and save it in target location
 func SamplePDFPages(sourcePDF string, numberOfPages int, targetPDF string) {
 
-	pdfFile, werr := os.Create(targetPDF)
-	defer pdfFile.Close()
+	pdfWriter := unidoc.NewPdfWriter()
+
+	f, rerr := os.Open(sourcePDF)
+	if rerr != nil {
+		panic(rerr)
+	}
+
+	defer f.Close()
+
+	pdfReader, prerr := unidoc.NewPdfReader(f)
+	if prerr != nil {
+		panic(prerr)
+	}
+
+	for i := 1; i <= numberOfPages; i++ {
+		pageNum := i
+
+		page, gperr := pdfReader.GetPage(pageNum)
+		if gperr != nil {
+			panic(gperr)
+		}
+
+		aperr := pdfWriter.AddPage(page)
+		if aperr != nil {
+			panic(aperr)
+		}
+	}
+
+	fWrite, werr := os.Create(targetPDF)
 	if werr != nil {
 		panic(werr)
 	}
 
-	f, r, err := pdf.Open(sourcePDF)
-	defer f.Close()
-	if err != nil {
-		panic(err)
-	}
-	//totalPage := r.NumPage()
-	//totalPage := 1
+	defer fWrite.Close()
 
-	for pageIndex := 1; pageIndex <= numberOfPages; pageIndex++ {
-		p := r.Page(pageIndex)
-		if p.V.IsNull() {
-			continue
-		}
-		// Read all the pages
-		//b, ierr := ioutil.ReadAll(p.V.Reader())
-		//if ierr != nil {
-		//	panic(ierr)
-		//}
-		//b := []byte(p.Content())
-		//// Write it out ..
-		//_, werr := pdfFile.Write(b)
-		//if werr != nil {
-		//	panic(werr)
-		//}
+	wperr := pdfWriter.Write(fWrite)
+	if wperr != nil {
+		panic(wperr)
 	}
 }
 
@@ -243,15 +255,75 @@ func SplitBukanLisanPDFs() {
 	// Break apart full document into a PDF struct for analysis
 	// Below is with clean up data below PDF7?
 	//iteratePDF("raw/BukanLisan/test_optimized.pdf")
-	iteratePDF("raw/BukanLisan/Pertanyaan Jawapan Bukan Lisan 22019.pdf")
+
+	// FULL DATA
+	//iteratePDF("raw/BukanLisan/Pertanyaan Jawapan Bukan Lisan 22019.pdf")
+
 	//readPdf2("raw/BukanLisan/fixture/test_1-15.pdf")
 	//readPdf2(("raw/BukanLisan/clean_new.pdf"))
-	//SamplePDFPages("raw/BukanLisan/fixture/test_1-15.pdf", 1, "/tmp/test.pdf")
+
+	// SPlit the pages
+	//SamplePDFPages("raw/BukanLisan/Pertanyaan Jawapan Bukan Lisan 22019.pdf", 10, "/tmp/test.pdf")
+	//iteratePDF("/tmp/test.pdf")
+	//readPdf2("/tmp/test.pdf")
+	//unidocReadPDF("/tmp/test.pdf")
+
+	readPdf2("./raw/BukanLisan/split/Pertanyaan Jawapan Bukan Lisan 22019_76-90.pdf")
+	//iteratePDF("./raw/BukanLisan/split/Pertanyaan Jawapan Bukan Lisan 22019_76-90.pdf")
+
 	// Looks for consecutive Soalan keywords; mark potential split
 	// Detect when we have gone too far
 	// Re-run for sanity check; point out missing numbers
 	// Output structure for plan; can be manipulated; with fancy overlays :P
 	// Split based on the planned structure
+}
+
+func unidocReadPDF(inputPath string) error {
+	f, err := os.Open(inputPath)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	pdfReader, err := unidoc.NewPdfReader(f)
+	if err != nil {
+		return err
+	}
+
+	numPages, err := pdfReader.GetNumPages()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("--------------------\n")
+	fmt.Printf("PDF to text extraction:\n")
+	fmt.Printf("--------------------\n")
+	for i := 0; i < numPages; i++ {
+		pageNum := i + 1
+
+		page, err := pdfReader.GetPage(pageNum)
+		if err != nil {
+			return err
+		}
+
+		ex, err := extractor.New(page)
+		if err != nil {
+			return err
+		}
+
+		text, err := ex.ExtractText()
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("------------------------------")
+		fmt.Printf("Page %d:\n", pageNum)
+		fmt.Printf("\"%s\"\n", text)
+		fmt.Println("------------------------------")
+	}
+
+	return nil
 }
 
 // Example form PR + comments --> https://github.com/rsc/pdf/pull/21/files?short_path=04c6e90#diff-04c6e90faac2675aa89e2176d2eec7d8
@@ -276,11 +348,11 @@ func readPdf2(path string) (string, error) {
 			//if isDifferentLine(text, lastTextStyle) {
 			//	text.S = "\n" + text.S
 			//}
-			if text.S == "\n" {
-				fmt.Println("NEWLINE!!!===============")
-			} else if text.Y != lastTextStyle.Y {
-				fmt.Println("CHange Y!!!")
-			}
+			//if text.S == "\n" {
+			//	fmt.Println("NEWLINE!!!===============")
+			//} else if text.Y != lastTextStyle.Y {
+			//	fmt.Println("CHange Y!!!")
+			//}
 
 			if isSameSentence(text, lastTextStyle) {
 				lastTextStyle.S = lastTextStyle.S + text.S
@@ -291,15 +363,15 @@ func readPdf2(path string) (string, error) {
 		}
 	}
 
-	spew.Dump(r.Page(5).GetPlainText(nil))
-	spew.Dump(r.Page(6).GetPlainText(nil))
-
-	log.Println("MULTI-PAGE================>")
-
-	fmt.Println(r.Page(9).GetPlainText(nil))
-	fmt.Println(r.Page(10).GetPlainText(nil))
-	fmt.Println(r.Page(11).GetPlainText(nil))
-	fmt.Println(r.Page(12).GetPlainText(nil))
+	//spew.Dump(r.Page(5).GetPlainText(nil))
+	//spew.Dump(r.Page(6).GetPlainText(nil))
+	//
+	//log.Println("MULTI-PAGE================>")
+	//
+	//fmt.Println(r.Page(9).GetPlainText(nil))
+	//fmt.Println(r.Page(10).GetPlainText(nil))
+	//fmt.Println(r.Page(11).GetPlainText(nil))
+	//fmt.Println(r.Page(12).GetPlainText(nil))
 
 	return "", nil
 }
