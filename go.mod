@@ -9,4 +9,5 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/unidoc/unidoc v2.2.0+incompatible
 	golang.org/x/image v0.0.0-20190424155947-59b11bec70c7 // indirect
+	golang.org/x/xerrors v0.0.0-20190410155217-1f06c39b4373
 )

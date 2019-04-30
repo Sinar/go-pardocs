@@ -16,6 +16,8 @@ import (
 	"github.com/ledongthuc/pdf"
 
 	unidoc "github.com/unidoc/unidoc/pdf/model"
+
+	"golang.org/x/xerrors"
 )
 
 // All extracted from pdfcpu .. da best!
@@ -170,7 +172,8 @@ func iteratePDF(sourceFileName string) {
 	f, r, err := pdf.Open(sourceFileName)
 	defer f.Close()
 	if err != nil {
-		panic(err)
+		panic(xerrors.Errorf("DIE!!! %v", err))
+		//panic(err)
 	}
 
 	log.Println("Num pages: ", r.NumPage())
@@ -210,14 +213,14 @@ func SamplePDFPages(sourcePDF string, numberOfPages int, targetPDF string) {
 
 	f, rerr := os.Open(sourcePDF)
 	if rerr != nil {
-		panic(rerr)
+		panic(xerrors.Errorf("SamplePDFPages: %v", rerr))
 	}
 
 	defer f.Close()
 
 	pdfReader, prerr := unidoc.NewPdfReader(f)
 	if prerr != nil {
-		panic(prerr)
+		panic(xerrors.Errorf("SamplePDFPages: %v", prerr))
 	}
 
 	for i := 1; i <= numberOfPages; i++ {
@@ -225,30 +228,31 @@ func SamplePDFPages(sourcePDF string, numberOfPages int, targetPDF string) {
 
 		page, gperr := pdfReader.GetPage(pageNum)
 		if gperr != nil {
-			panic(gperr)
+			panic(xerrors.Errorf("SamplePDFPages: %v", gperr))
 		}
 
 		aperr := pdfWriter.AddPage(page)
 		if aperr != nil {
-			panic(aperr)
+			panic(xerrors.Errorf("SamplePDFPages: %v", aperr))
 		}
 	}
 
 	fWrite, werr := os.Create(targetPDF)
 	if werr != nil {
-		panic(werr)
+		panic(xerrors.Errorf("SamplePDFPages: %v", werr))
 	}
 
 	defer fWrite.Close()
 
 	wperr := pdfWriter.Write(fWrite)
 	if wperr != nil {
-		panic(wperr)
+		panic(xerrors.Errorf("SamplePDFPages: %v", wperr))
 	}
 }
 
 // SplitBukanLisanPDFs breaks apart ~100 questions into
 func SplitBukanLisanPDFs() {
+
 	fmt.Println("Inside SplitBukanLisanPDFs .. ")
 	// In the new format, it is much more simplified; all questions during the session ..
 
@@ -331,7 +335,7 @@ func readPdf2(path string) (string, error) {
 	f, r, err := pdf.Open(path)
 	defer f.Close()
 	if err != nil {
-		return "", err
+		return "", xerrors.New(err.Error())
 	}
 	//totalPage := r.NumPage()
 	totalPage := 5
