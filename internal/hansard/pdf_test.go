@@ -9,13 +9,13 @@ import (
 // Structure copied from Dave Cheney
 // https://dave.cheney.net/practical-go/presentations/gophercon-singapore-2019.html#_comparing_expected_an_actual
 // TestSplit combines it all
-func TestSplit(t *testing.T) {
+func TestPDFTxtStyles(t *testing.T) {
 	tests := map[string]struct {
 		input string
 		sep   string
 		want  []string
 	}{
-		"simple":       {input: loadSimple(), sep: "/", want: []string{"a", "b", "c"}},
+		"simple":       {input: loadSimply(), sep: "/", want: []string{"a", "b", "c"}},
 		"wrong sep":    {input: "a/b/c", sep: ",", want: []string{"a/b/c"}},
 		"no sep":       {input: "abc", sep: "/", want: []string{"abc"}},
 		"trailing sep": {input: "a/b/c/", sep: "/", want: []string{"a", "b", "c"}},
@@ -33,6 +33,6 @@ func TestSplit(t *testing.T) {
 	}
 }
 
-func loadSimple() string {
+func loadSimply() string {
 	return "a/b/c"
 }

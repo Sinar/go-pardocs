@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/Sinar/go-pardocs/internal/hansard"
+
 	"github.com/unidoc/unidoc/pdf/extractor"
 
 	"github.com/pkg/errors"
@@ -20,6 +22,34 @@ import (
 	"golang.org/x/xerrors"
 )
 
+func SplitBukanLisanPDFs() {
+
+	// Break apart full document into a PDF struct for analysis
+	// ./raw/BukanLisan/split/Pertanyaan Jawapan Bukan Lisan 22019_76-90.pdf
+	// is a split from the modified original below:
+	// $ file ~/Downloads/Pertanyaan\ Jawapan\ Bukan\ Lisan\ 22019.pdf
+	// 		/Users/mleow/Downloads/Pertanyaan Jawapan Bukan Lisan 22019.pdf: PDF document, version 1.7
+	pdfDoc, exerr := hansard.ExtractPDF("./raw/BukanLisan/split/Pertanyaan Jawapan Bukan Lisan 22019_76-90.pdf")
+	if exerr != nil {
+		panic(exerr)
+	}
+
+	for _, p := range pdfDoc.Pages {
+		fmt.Println("PAGE:", p.PageNo)
+		// try to recognize value from top of content ..
+		for _, c := range p.PDFTxtStyles {
+			fmt.Println("FOR CONSIDERATION: ", c)
+		}
+	}
+	// Looks for consecutive Soalan keywords; mark potential split
+	// Detect when we have gone too far
+	// Re-run for sanity check; point out missing numbers
+	// Output structure for plan; can be manipulated; with fancy overlays :P
+	// Split based on the planned structure
+
+}
+
+// Below all spike .. TODO: Remove it!!!
 // All extracted from pdfcpu .. da best!
 func contentObjNrs(ctx *pdfcpu.Context, page int) ([]int, error) {
 
@@ -250,8 +280,8 @@ func SamplePDFPages(sourcePDF string, numberOfPages int, targetPDF string) {
 	}
 }
 
-// SplitBukanLisanPDFs breaks apart ~100 questions into
-func SplitBukanLisanPDFs() {
+// SplitBukanLisanPDFsSpike breaks apart ~100 questions into
+func SplitBukanLisanPDFsSpike() {
 
 	fmt.Println("Inside SplitBukanLisanPDFs .. ")
 	// In the new format, it is much more simplified; all questions during the session ..
@@ -275,11 +305,6 @@ func SplitBukanLisanPDFs() {
 	readPdf2("./raw/BukanLisan/split/Pertanyaan Jawapan Bukan Lisan 22019_76-90.pdf")
 	//iteratePDF("./raw/BukanLisan/split/Pertanyaan Jawapan Bukan Lisan 22019_76-90.pdf")
 
-	// Looks for consecutive Soalan keywords; mark potential split
-	// Detect when we have gone too far
-	// Re-run for sanity check; point out missing numbers
-	// Output structure for plan; can be manipulated; with fancy overlays :P
-	// Split based on the planned structure
 }
 
 func unidocReadPDF(inputPath string) error {
