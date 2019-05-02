@@ -22,12 +22,16 @@ func TestPDFTxtStyles(t *testing.T) {
 	}
 
 	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
+		name := name // If want to run in parallel
+		tc := tc     // If want to run in parallel
+		t.Run(name, func(st *testing.T) {
+			st.Parallel() // Is OK if we make above changes
+
 			got := Split(tc.input, tc.sep)
 
 			diff := cmp.Diff(tc.want, got)
 			if diff != "" {
-				t.Fatalf(diff)
+				st.Fatalf(diff)
 			}
 		})
 	}

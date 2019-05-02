@@ -37,7 +37,7 @@ func SplitBukanLisanPDFs() {
 	for _, p := range pdfDoc.Pages {
 		fmt.Println("PAGE:", p.PageNo)
 		// try to recognize value from top of content ..
-		for _, c := range p.PDFTxtStyles {
+		for _, c := range p.PDFTxtSameStyles {
 			fmt.Println("FOR CONSIDERATION: ", c)
 		}
 	}
