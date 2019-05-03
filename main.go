@@ -14,10 +14,10 @@ func main() {
 	flag.Parse()
 
 	// Experiments only ..
-	cmd.SplitBukanLisanPDFsSpike()
+	//cmd.SplitBukanLisanPDFsSpike()
 
 	// Actual
-	//cmd.SplitBukanLisanPDFs()
+	cmd.SplitBukanLisanPDFs()
 
 }
 

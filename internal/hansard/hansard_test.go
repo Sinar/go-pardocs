@@ -1,7 +1,9 @@
-package hansard
+package hansard_test
 
 import (
 	"testing"
+
+	"github.com/Sinar/go-pardocs/internal/hansard"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -28,7 +30,7 @@ func TestSplit(t *testing.T) {
 		t.Run(name, func(st *testing.T) {
 			st.Parallel() // Is OK if we make above changes
 
-			got := Split(tc.input, tc.sep)
+			got := hansard.Split(tc.input, tc.sep)
 
 			diff := cmp.Diff(tc.want, got)
 			if diff != "" {

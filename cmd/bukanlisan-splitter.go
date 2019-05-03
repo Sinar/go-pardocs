@@ -23,7 +23,7 @@ import (
 )
 
 func SplitBukanLisanPDFs() {
-
+	fmt.Println("In SplitBukanLisanPDFs ...")
 	// Break apart full document into a PDF struct for analysis
 	// ./raw/BukanLisan/split/Pertanyaan Jawapan Bukan Lisan 22019_76-90.pdf
 	// is a split from the modified original below:
