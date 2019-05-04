@@ -2,6 +2,7 @@ package hansard
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/davecgh/go-spew/spew"
 
@@ -62,14 +63,23 @@ func ExtractPDF(pdfPath string) (*PDFDocument, error) {
 		// processStyleChanges ..
 		//extractTxtSameStyles()
 		// DEBUG
-		fmt.Println("LEN: ", p.V.Len())
-		fmt.Println("KEYS", p.V.Keys())
-		fmt.Println("KIND", p.V.Kind())
+		//fmt.Println("LEN: ", p.V.Len())
+		//fmt.Println("KEYS", p.V.Keys())
+		//fmt.Println("KIND", p.V.Kind())
+		fmt.Println("== START CONTENT PAGE ", i)
+		spew.Dump(pt)
+		// Top 10 lines for this page by line analysis
+		fmt.Println("== START ANALYZE by LINE")
 		extractTxtSameLine(p.Content().Text)
+		// Top 10
+		fmt.Println("== START ANALYZE by STYLE")
+		extractTxtSameStyles(p.Content().Text)
+		fmt.Println("== END ANALYZE by STYLE")
+
 		pdfPages = append(pdfPages, pdfPage)
 	}
 
-	spew.Dump(pdfPages)
+	//spew.Dump(pdfPages)
 	//spew.Dump("BOB \n SUE \n MARY ....")
 
 	return &pdfDoc, nil
@@ -100,12 +110,17 @@ func extractTxtSameLine(pdfContentTxt []pdf.Text) []string {
 		}
 
 		// Happy path ..
-		fmt.Println("Current CONTENT: ", currentContent, " X: ", v.X, " Y: ", v.Y)
+		// DEBUG
+		//fmt.Println("Append CONTENT: ", currentContent, " X: ", v.X, " Y: ", v.Y)
 		// number of valid line increase when new valid line ..
 		if currentLineNumber != v.Y {
-			fmt.Println("NEW Line ... collected: ", currentContent)
-			pdfTxtSameLine = append(pdfTxtSameLine, currentContent)
-			numValidLineCounted++
+			if strings.TrimSpace(currentContent) != "" {
+				// trim new lines ..
+				currentContent = strings.ReplaceAll(currentContent, "\n", "")
+				fmt.Println("NEW Line ... collected: ", currentContent)
+				pdfTxtSameLine = append(pdfTxtSameLine, currentContent)
+				numValidLineCounted++
+			}
 			currentContent = v.S // reset .. after append
 			currentLineNumber = v.Y
 		} else {
@@ -118,10 +133,13 @@ func extractTxtSameLine(pdfContentTxt []pdf.Text) []string {
 			break
 		}
 
-		// Failsafe
-		//if i > 50 {
-		//	break
-		//}
+	}
+	// All the left over, do one more final check ...
+	if strings.TrimSpace(currentContent) != "" {
+		// trim new lines ..
+		currentContent = strings.ReplaceAll(currentContent, "\n", "")
+		fmt.Println("NEW Line ... collected: ", currentContent)
+		pdfTxtSameLine = append(pdfTxtSameLine, currentContent)
 	}
 
 	return pdfTxtSameLine
@@ -130,11 +148,50 @@ func extractTxtSameLine(pdfContentTxt []pdf.Text) []string {
 func extractTxtSameStyles(pdfContentTxt []pdf.Text) []string {
 	var pdfTxtSameStyles []string
 
-	// NOTE: Only get 10 lines ..
+	var numValidLineCounted int
+	var currentFont string
+	var currentContent string
 
-	// Guard function .. what is it?
+	for _, v := range pdfContentTxt {
 
-	// Happy path ..
+		// Guard function .. what is it?
+
+		if currentFont == "" {
+			currentFont = v.Font
+			fmt.Println("Set first font to ", currentFont)
+			currentContent += v.S
+			continue
+		}
+
+		// Happy path ..
+		if currentFont != v.Font {
+			if strings.TrimSpace(currentContent) != "" {
+				// trim new lines ..
+				currentContent = strings.ReplaceAll(currentContent, "\n", "")
+				fmt.Println("NEW Style ... collected: ", currentContent)
+				pdfTxtSameStyles = append(pdfTxtSameStyles, currentContent)
+				numValidLineCounted++
+			}
+			// reset for next iteraton ..
+			currentContent = v.S // reset .. after append
+			currentFont = v.Font
+		} else {
+			// If with the same style, just build up the content ..
+			currentContent += v.S
+		}
+
+		// NOTE: Only get 10 lines ..
+		if numValidLineCounted > 10 {
+			break
+		}
+	}
+	// All the left over, do one more final check ...
+	if strings.TrimSpace(currentContent) != "" {
+		// trim new lines ..
+		currentContent = strings.ReplaceAll(currentContent, "\n", "")
+		fmt.Println("NEW Style ... collected: ", currentContent)
+		pdfTxtSameStyles = append(pdfTxtSameStyles, currentContent)
+	}
 
 	return pdfTxtSameStyles
 }
