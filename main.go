@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	defer recoverFromPanic()
+	//defer recoverFromPanic()
 	fmt.Println("Welcome to go-pardocs!")
 
 	flag.Parse()

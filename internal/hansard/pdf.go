@@ -15,9 +15,9 @@ import (
 
 type PDFPage struct {
 	PageNo           int
-	PDFTxtSameStyles []string // combined content with same style .. proxy for changes
 	PDFPlainText     string
-	PDFRawTxt        []pdf.Text // for debugging purposes ..
+	PDFTxtSameLines  []string // combined content with same line .. proxy for changes
+	PDFTxtSameStyles []string // combined content with same style .. proxy for changes
 }
 
 type PDFDocument struct {
@@ -66,31 +66,36 @@ func ExtractPDF(pdfPath string) (*PDFDocument, error) {
 		//fmt.Println("LEN: ", p.V.Len())
 		//fmt.Println("KEYS", p.V.Keys())
 		//fmt.Println("KIND", p.V.Kind())
-		fmt.Println("== START CONTENT PAGE ", i)
-		spew.Dump(pt)
+		// DEBUG
+		//fmt.Println("== START CONTENT PAGE ", i)
+		//spew.Dump(pt)
 		// Top 10 lines for this page by line analysis
-		fmt.Println("== START ANALYZE by LINE")
-		extractTxtSameLine(p.Content().Text)
+		//fmt.Println("== START ANALYZE by LINE")
+		pdfPage.PDFTxtSameLines = make([]string, 0, 20)
+		extractTxtSameLine(&pdfPage.PDFTxtSameLines, p.Content().Text)
+
 		// Top 10
-		fmt.Println("== START ANALYZE by STYLE")
-		extractTxtSameStyles(p.Content().Text)
-		fmt.Println("== END ANALYZE by STYLE")
+		//fmt.Println("== START ANALYZE by STYLE")
+		pdfPage.PDFTxtSameStyles = make([]string, 0, 20)
+		extractTxtSameStyles(&pdfPage.PDFTxtSameStyles, p.Content().Text)
+		//fmt.Println("== END ANALYZE by STYLE")
 
 		pdfPages = append(pdfPages, pdfPage)
 	}
 
-	//spew.Dump(pdfPages)
+	spew.Dump(pdfPages)
 	//spew.Dump("BOB \n SUE \n MARY ....")
 
 	return &pdfDoc, nil
 }
 
-func extractTxtSameLine(pdfContentTxt []pdf.Text) []string {
-	var pdfTxtSameLine []string
+func extractTxtSameLine(ptrTxtSameLine *[]string, pdfContentTxt []pdf.Text) error {
 
 	var numValidLineCounted int
 	var currentLineNumber float64
 	var currentContent string
+
+	var pdfTxtSameLine []string
 
 	//spew.Dump(pdfContentTxt)
 
@@ -117,7 +122,8 @@ func extractTxtSameLine(pdfContentTxt []pdf.Text) []string {
 			if strings.TrimSpace(currentContent) != "" {
 				// trim new lines ..
 				currentContent = strings.ReplaceAll(currentContent, "\n", "")
-				fmt.Println("NEW Line ... collected: ", currentContent)
+				// DEBUG
+				//fmt.Println("NEW Line ... collected: ", currentContent)
 				pdfTxtSameLine = append(pdfTxtSameLine, currentContent)
 				numValidLineCounted++
 			}
@@ -138,19 +144,22 @@ func extractTxtSameLine(pdfContentTxt []pdf.Text) []string {
 	if strings.TrimSpace(currentContent) != "" {
 		// trim new lines ..
 		currentContent = strings.ReplaceAll(currentContent, "\n", "")
-		fmt.Println("NEW Line ... collected: ", currentContent)
+		// DEBUG
+		//fmt.Println("NEW Line ... collected: ", currentContent)
 		pdfTxtSameLine = append(pdfTxtSameLine, currentContent)
 	}
 
-	return pdfTxtSameLine
+	*ptrTxtSameLine = pdfTxtSameLine
+	//spew.Dump(ptrTxtSameLine)
+	return nil
 }
 
-func extractTxtSameStyles(pdfContentTxt []pdf.Text) []string {
-	var pdfTxtSameStyles []string
-
+func extractTxtSameStyles(ptrTxtSameStyles *[]string, pdfContentTxt []pdf.Text) error {
 	var numValidLineCounted int
 	var currentFont string
 	var currentContent string
+
+	var pdfTxtSameStyles []string
 
 	for _, v := range pdfContentTxt {
 
@@ -168,8 +177,11 @@ func extractTxtSameStyles(pdfContentTxt []pdf.Text) []string {
 			if strings.TrimSpace(currentContent) != "" {
 				// trim new lines ..
 				currentContent = strings.ReplaceAll(currentContent, "\n", "")
-				fmt.Println("NEW Style ... collected: ", currentContent)
+				// DEBUG
+				//fmt.Println("NEW Style ... collected: ", currentContent)
 				pdfTxtSameStyles = append(pdfTxtSameStyles, currentContent)
+				//fmt.Println("CURRENT ,...")
+				//spew.Dump(pdfTxtSameStyles)
 				numValidLineCounted++
 			}
 			// reset for next iteraton ..
@@ -189,9 +201,13 @@ func extractTxtSameStyles(pdfContentTxt []pdf.Text) []string {
 	if strings.TrimSpace(currentContent) != "" {
 		// trim new lines ..
 		currentContent = strings.ReplaceAll(currentContent, "\n", "")
-		fmt.Println("NEW Style ... collected: ", currentContent)
+		// DEBUG
+		//fmt.Println("NEW Style ... collected: ", currentContent)
 		pdfTxtSameStyles = append(pdfTxtSameStyles, currentContent)
 	}
 
-	return pdfTxtSameStyles
+	*ptrTxtSameStyles = pdfTxtSameStyles
+	//spew.Dump(ptrTxtSameStyles)
+
+	return nil
 }
