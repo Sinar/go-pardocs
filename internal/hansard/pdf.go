@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
-
 	"github.com/ledongthuc/pdf"
 	"golang.org/x/xerrors"
 )
@@ -25,21 +23,21 @@ type PDFDocument struct {
 	Pages    []PDFPage
 }
 
-func ExtractPDF(pdfPath string) (*PDFDocument, error) {
+func ExtractPDF(pdfDoc *PDFDocument, pdfPath string) error {
 	fmt.Println("In ExtractPDF ...")
 
 	// Guard functions here ..
 
 	// Now all c;ear, do the action
 	// Start with the zero value
-	var pdfDoc PDFDocument
+	//var pdfDoc PDFDocument
 	var pdfPages []PDFPage
 
 	// Example form PR + comments --> https://github.com/rsc/pdf/pull/21/files?short_path=04c6e90#diff-04c6e90faac2675aa89e2176d2eec7d8
 	f, r, err := pdf.Open(pdfPath)
 	defer f.Close()
 	if err != nil {
-		return nil, xerrors.Errorf("Open failed: %s -  %w", pdfPath, err)
+		return xerrors.Errorf("Open failed: %s -  %w", pdfPath, err)
 	}
 	// iterate through all the pages one by one
 	pdfDoc.NumPages = r.NumPage()
@@ -57,7 +55,7 @@ func ExtractPDF(pdfPath string) (*PDFDocument, error) {
 		// copy over plain text; short form
 		pt, pterr := p.GetPlainText(nil)
 		if pterr != nil {
-			return nil, xerrors.Errorf(" GetPlainText ERROR: %w", pt)
+			return xerrors.Errorf(" GetPlainText ERROR: %w", pt)
 		}
 		pdfPage.PDFPlainText = pt
 		// processStyleChanges ..
@@ -83,10 +81,11 @@ func ExtractPDF(pdfPath string) (*PDFDocument, error) {
 		pdfPages = append(pdfPages, pdfPage)
 	}
 
-	spew.Dump(pdfPages)
+	//spew.Dump(pdfPages)
 	//spew.Dump("BOB \n SUE \n MARY ....")
+	pdfDoc.Pages = pdfPages
 
-	return &pdfDoc, nil
+	return nil
 }
 
 func extractTxtSameLine(ptrTxtSameLine *[]string, pdfContentTxt []pdf.Text) error {
@@ -109,7 +108,8 @@ func extractTxtSameLine(ptrTxtSameLine *[]string, pdfContentTxt []pdf.Text) erro
 
 		if currentLineNumber == 0 {
 			currentLineNumber = v.Y
-			fmt.Println("Set first line to ", currentLineNumber)
+			// DEBUG
+			//fmt.Println("Set first line to ", currentLineNumber)
 			currentContent += v.S
 			continue
 		}
@@ -167,7 +167,8 @@ func extractTxtSameStyles(ptrTxtSameStyles *[]string, pdfContentTxt []pdf.Text) 
 
 		if currentFont == "" {
 			currentFont = v.Font
-			fmt.Println("Set first font to ", currentFont)
+			// DEBUG
+			//fmt.Println("Set first font to ", currentFont)
 			currentContent += v.S
 			continue
 		}
