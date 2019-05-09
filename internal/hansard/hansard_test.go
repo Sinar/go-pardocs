@@ -1,9 +1,8 @@
-package hansard_test
+package hansard
 
 import (
+	"reflect"
 	"testing"
-
-	"github.com/Sinar/go-pardocs/internal/hansard"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -30,7 +29,7 @@ func TestSplit(t *testing.T) {
 		t.Run(name, func(st *testing.T) {
 			st.Parallel() // Is OK if we make above changes
 
-			got := hansard.Split(tc.input, tc.sep)
+			got := Split(tc.input, tc.sep)
 
 			diff := cmp.Diff(tc.want, got)
 			if diff != "" {
@@ -42,4 +41,122 @@ func TestSplit(t *testing.T) {
 
 func loadSimple() string {
 	return "a/b/c"
+}
+
+func Test_detectPossibleQuestionNum(t *testing.T) {
+	type args struct {
+		linesExcerpt []string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := detectPossibleQuestionNum(tt.args.linesExcerpt); (err != nil) != tt.wantErr {
+				t.Errorf("detectPossibleQuestionNum() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_detectPossibleSessionName(t *testing.T) {
+	type args struct {
+		pdfPath string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := detectPossibleSessionName(tt.args.pdfPath); got != tt.want {
+				t.Errorf("detectPossibleSessionName() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewHansardDocument(t *testing.T) {
+	type args struct {
+		pdfPath string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *HansardDocument
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewHansardDocument(tt.args.pdfPath)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewHansardDocument() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewHansardDocument() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHansardDocument_ProcessLinesExcerpt(t *testing.T) {
+	type args struct {
+		linesExcerpt []string
+	}
+	tests := []struct {
+		name    string
+		hd      *HansardDocument
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.hd.ProcessLinesExcerpt(tt.args.linesExcerpt); (err != nil) != tt.wantErr {
+				t.Errorf("HansardDocument.ProcessLinesExcerpt() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestHansardDocument_String(t *testing.T) {
+	tests := []struct {
+		name string
+		hd   *HansardDocument
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.hd.String()
+		})
+	}
+}
+
+func TestHansardDocument_SplitPDFByQuestions(t *testing.T) {
+	tests := []struct {
+		name    string
+		hd      *HansardDocument
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.hd.SplitPDFByQuestions(); (err != nil) != tt.wantErr {
+				t.Errorf("HansardDocument.SplitPDFByQuestions() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
 }
