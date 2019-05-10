@@ -19,11 +19,28 @@ type PDFPage struct {
 }
 
 type PDFDocument struct {
-	NumPages int
-	Pages    []PDFPage
+	NumPages   int
+	Pages      []PDFPage
+	sourcePath string
 }
 
-func ExtractPDF(pdfDoc *PDFDocument, pdfPath string) error {
+func NewPDFDoc(sourcePath string) (*PDFDocument, error) {
+	// TODO: Guard checks to ensure file exists?? etc.
+	// and is readbale??
+
+	pdfDoc := PDFDocument{
+		sourcePath: sourcePath,
+	}
+
+	exerr := pdfDoc.extractPDF()
+	if exerr != nil {
+		panic(exerr)
+
+	}
+	return &pdfDoc, nil
+
+}
+func (pdfDoc *PDFDocument) extractPDF() error {
 	fmt.Println("In ExtractPDF ...")
 
 	// Guard functions here ..
@@ -34,10 +51,10 @@ func ExtractPDF(pdfDoc *PDFDocument, pdfPath string) error {
 	var pdfPages []PDFPage
 
 	// Example form PR + comments --> https://github.com/rsc/pdf/pull/21/files?short_path=04c6e90#diff-04c6e90faac2675aa89e2176d2eec7d8
-	f, r, err := pdf.Open(pdfPath)
+	f, r, err := pdf.Open(pdfDoc.sourcePath)
 	defer f.Close()
 	if err != nil {
-		return xerrors.Errorf("Open failed: %s -  %w", pdfPath, err)
+		return xerrors.Errorf("Open failed: %s -  %w", pdfDoc.sourcePath, err)
 	}
 	// iterate through all the pages one by one
 	pdfDoc.NumPages = r.NumPage()

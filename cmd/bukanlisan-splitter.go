@@ -13,9 +13,15 @@ func SplitBukanLisanPDFs() {
 	// is a split from the modified original below:
 	// $ file ~/Downloads/Pertanyaan\ Jawapan\ Bukan\ Lisan\ 22019.pdf
 	// 		/Users/mleow/Downloads/Pertanyaan Jawapan Bukan Lisan 22019.pdf: PDF document, version 1.7
-	pdfDoc := hansard.PDFDocument{}
+	//pdfDoc := hansard.PDFDocument{}
 	pdfPath := "./raw/BukanLisan/split/Pertanyaan Jawapan Bukan Lisan 22019_76-90.pdf"
-	exerr := hansard.ExtractPDF(&pdfDoc, pdfPath)
+	pdfDoc, err := hansard.NewPDFDoc(pdfPath)
+	if err != nil {
+		panic(err)
+	}
+	// Extract the rest of the data; or should it just be built in?
+	// TODO: Probably ..
+	exerr := pdfDoc.ExtractPDF()
 	if exerr != nil {
 		panic(exerr)
 	}
