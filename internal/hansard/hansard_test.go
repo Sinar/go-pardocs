@@ -64,19 +64,20 @@ func Test_detectPossibleQuestionNum(t *testing.T) {
 }
 
 func Test_detectPossibleSessionName(t *testing.T) {
-	type args struct {
-		pdfPath string
-	}
 	tests := []struct {
-		name string
-		args args
-		want string
+		name    string
+		pdfPath string
+		want    string
 	}{
-		// TODO: Add test cases.
+		{"test #1", "./raw/BukanLisan/bobo.pdf", "Bobo"},
+		{"test #2", "./raw/BukanLisan/bobo with space.pdf", "BoboWithSpace"},
+		{"test #3", "./raw/BukanLisan/bobo.pdf", "boboSession"},
+		{"test #4", ".raw/JawatanKuasa/JKSTUPKK/rumusan-laporan-akhir-jawatankuasa-siasatan-tadbir-urus-perolehan-dan-kewangan-kerajaan-mengenai-projek-land-swap-di-bawah-kementerian-pertahanan_51-59.pdf",
+			"boboSession"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := detectPossibleSessionName(tt.args.pdfPath); got != tt.want {
+			if got := detectPossibleSessionName(tt.pdfPath); got != tt.want {
 				t.Errorf("detectPossibleSessionName() = %v, want %v", got, tt.want)
 			}
 		})

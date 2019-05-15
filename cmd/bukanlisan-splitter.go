@@ -15,16 +15,17 @@ func SplitBukanLisanPDFs() {
 	// 		/Users/mleow/Downloads/Pertanyaan Jawapan Bukan Lisan 22019.pdf: PDF document, version 1.7
 	//pdfDoc := hansard.PDFDocument{}
 	pdfPath := "./raw/BukanLisan/split/Pertanyaan Jawapan Bukan Lisan 22019_76-90.pdf"
+	//pdfPath := "./raw/JawatanKuasa/rumusan-laporan-akhir-jawatankuasa-siasatan-tadbir-urus-perolehan-dan-kewangan-kerajaan-mengenai-projek-land-swap-di-bawah-kementerian-pertahanan.pdf"
 	pdfDoc, err := hansard.NewPDFDoc(pdfPath)
 	if err != nil {
 		panic(err)
 	}
 	// Extract the rest of the data; or should it just be built in?
 	// TODO: Probably ..
-	exerr := pdfDoc.ExtractPDF()
-	if exerr != nil {
-		panic(exerr)
-	}
+	//exerr := pdfDoc.ExtractPDF()
+	//if exerr != nil {
+	//	panic(exerr)
+	//}
 
 	// Start Hansard DOcument
 	// TODO: Refactor into a factory perhaps?

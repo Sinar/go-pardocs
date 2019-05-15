@@ -58,8 +58,9 @@ func (pdfDoc *PDFDocument) extractPDF() error {
 	}
 	// iterate through all the pages one by one
 	pdfDoc.NumPages = r.NumPage()
-
-	for i := 1; i <= 5; i++ {
+	// DEBUG
+	pdfDoc.NumPages = 5
+	for i := 1; i <= pdfDoc.NumPages; i++ {
 		// init
 		pdfPage := PDFPage{}
 		pdfPage.PageNo = i
@@ -113,6 +114,7 @@ func extractTxtSameLine(ptrTxtSameLine *[]string, pdfContentTxt []pdf.Text) erro
 
 	var pdfTxtSameLine []string
 
+	// DEBUG
 	//spew.Dump(pdfContentTxt)
 
 	for _, v := range pdfContentTxt {

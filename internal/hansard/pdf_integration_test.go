@@ -96,32 +96,32 @@ func TestNewPDFDoc(t *testing.T) {
 	}
 }
 
-func TestPDFDocument_ExtractPDF(t *testing.T) {
-	type fields struct {
-		NumPages   int
-		Pages      []hansard.PDFPage
-		sourcePath string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-	}{
-		{"test #1", fields{}, true},
-		{"test #2", fields{}, true},
-		{"test #3", fields{}, true},
-		{"test #4", fields{}, true},
-		{"test #5", fields{}, true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pdfDoc := &hansard.PDFDocument{
-				NumPages: tt.fields.NumPages,
-				Pages:    tt.fields.Pages,
-			}
-			if err := pdfDoc.ExtractPDF(); (err != nil) != tt.wantErr {
-				t.Errorf("PDFDocument.ExtractPDF() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
+//func TestPDFDocument_ExtractPDF(t *testing.T) {
+//	type fields struct {
+//		NumPages   int
+//		Pages      []hansard.PDFPage
+//		sourcePath string
+//	}
+//	tests := []struct {
+//		name    string
+//		fields  fields
+//		wantErr bool
+//	}{
+//		{"test #1", fields{}, true},
+//		{"test #2", fields{}, true},
+//		{"test #3", fields{}, true},
+//		{"test #4", fields{}, true},
+//		{"test #5", fields{}, true},
+//	}
+//	for _, tt := range tests {
+//		t.Run(tt.name, func(t *testing.T) {
+//			pdfDoc := &hansard.PDFDocument{
+//				NumPages: tt.fields.NumPages,
+//				Pages:    tt.fields.Pages,
+//			}
+//			if err := pdfDoc.ExtractPDF(); (err != nil) != tt.wantErr {
+//				t.Errorf("PDFDocument.ExtractPDF() error = %v, wantErr %v", err, tt.wantErr)
+//			}
+//		})
+//	}
+//}
