@@ -42,7 +42,7 @@ func SplitBukanLisanPDFs() {
 		//}
 
 		// Detect question
-		dterr := hansardDoc.ProcessLinesExcerpt(p.PDFTxtSameLines)
+		dterr := hansardDoc.ProcessLinesExcerpt(p.PageNo, p.PDFTxtSameLines)
 		if dterr != nil {
 			panic(dterr)
 		}
