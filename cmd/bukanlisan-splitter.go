@@ -52,8 +52,18 @@ func SplitBukanLisanPDFs() {
 	}
 	// Re-run for sanity check; point out missing numbers
 	// Output structure for plan; can be manipulated; with fancy overlays :P
-	hansardDoc.String()
+	//hansardDoc.String()
+
+	hansardDoc.Finalize()
+	// DEBUG:
+	hansardDoc.ShowState()
+	fmt.Println("=== QUESTIONS ****************")
+	hansardDoc.ShowQuestions()
+
 	// Split based on the planned structure
 	hansardDoc.SplitPDFByQuestions()
+	// TODO: Needs a wrap up state for the last state left ..
+	// After the split; we should have the HansardQuestions
+	//hansardDoc.String()
 
 }

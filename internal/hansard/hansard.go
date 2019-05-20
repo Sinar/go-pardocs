@@ -1,6 +1,11 @@
 package hansard
 
-import "github.com/davecgh/go-spew/spew"
+import (
+	"fmt"
+	"regexp"
+
+	"github.com/davecgh/go-spew/spew"
+)
 
 type HansardPage struct {
 	pageNo                    int
@@ -42,10 +47,11 @@ const (
 )
 
 type splitterState struct {
-	lastMarkedPage        int
-	lastMarkedQuestionNum string
-	questionsStatus       map[string]QuestionStatus
-	currentHansardPages   []HansardPage
+	lastMarkedPage         int
+	lastMarkedQuestionNum  string
+	questionsStatus        map[string]QuestionStatus
+	currentHansardQuestion *HansardQuestion
+	currentHansardPages    []HansardPage
 }
 
 func NewHansardDocument(pdfPath string) (*HansardDocument, error) {
@@ -53,7 +59,7 @@ func NewHansardDocument(pdfPath string) (*HansardDocument, error) {
 		HansardType:     HANSARD_WRITTEN,
 		SessionName:     detectPossibleSessionName(pdfPath),
 		originalPDFPath: pdfPath,
-		splitterState:   splitterState{0, "", make(map[string]QuestionStatus, 0), nil},
+		splitterState:   splitterState{0, "", make(map[string]QuestionStatus, 0), nil, nil},
 	}
 	return &hansardDoc, nil
 }
@@ -64,33 +70,55 @@ func detectPossibleSessionName(pdfPath string) string {
 }
 
 func detectPossibleQuestionNum(linesExcerpt []string) (possibleQuestionNum string, derr error) {
+	// Setup regexp once
+	re := regexp.MustCompile(`(?i)^.*soalan.*\s+(\d+).*$`)
+
 	for _, line := range linesExcerpt {
+
+		sm := re.FindStringSubmatch(line)
+		// DEBUG:
+		//fmt.Println("LINE: ", line)
+		//spew.Dump(sm)
+
 		// If have "SOALAN" in there; pull out the regexp for digit
 		// can be SOALAN NO <digit>
 		// or NO SOALAN <digit>
 		// \w* SOALAN \w* <digit>
-		if line == "SOALAN" {
+		if sm != nil {
 			// Extract out the number; as string ..
-			return line, nil
+			// DEBUG:
+			//fmt.Println("FOUND NUM: ", sm[1])
+			return sm[1], nil
 		}
 	}
 	// Empty means did not find possibleQuestionNum
 	return "", nil
 }
 
-func NewHansardQuestion(possibleQuestionNum string) (*HansardQuestion, error) {
+func NewHansardQuestion(pageNumStart int, possibleQuestionNum string) (*HansardQuestion, error) {
+	// Guard rail
+	//pageNumStart, err := strconv.Atoi(possibleQuestionNum)
+	//if err != nil {
+	//	return nil, err
+	//}
+	if pageNumStart < 1 {
+		return nil, fmt.Errorf("Page Num %d invalid!", pageNumStart)
+	}
+	// Start and end can be the same page for a one pager?
 	hansardQuestion := HansardQuestion{
 		possibleQuestionNum,
 		possibleQuestionNum,
-		0,
-		0,
-		make([]HansardPage, 0),
+		pageNumStart,
+		pageNumStart,
+		nil,
 	}
 	return &hansardQuestion, nil
 }
 
 // ProcessLinesExcerpt takes the extracted excerpt; and pull out all the metadata
 func (hd *HansardDocument) ProcessLinesExcerpt(pageNum int, linesExcerpt []string) error {
+	// If found a new question; create a new HansardQuestion
+	// else attach the HansardPage to it and update metadata
 
 	// ALWAYS Create the HansardPage struct for this page ..
 	newPage := HansardPage{pageNo: pageNum, linesExcerpt: linesExcerpt}
@@ -99,15 +127,25 @@ func (hd *HansardDocument) ProcessLinesExcerpt(pageNum int, linesExcerpt []strin
 	if err != nil {
 		return err
 	}
+	// DEBUG
+	//fmt.Println("STATE: ", hd.splitterState)
 	// if empty; just initialize it with the question mapped
 	if possibleQuestionNum != hd.splitterState.lastMarkedQuestionNum {
-		hansardQuestion, nhqerr := NewHansardQuestion(possibleQuestionNum)
+		// Create new Question struct and attach it
+		hansardQuestion, nhqerr := NewHansardQuestion(pageNum, possibleQuestionNum)
 		if nhqerr != nil {
-			return nhqerr
+			return fmt.Errorf("NewHansardQuestion: FAILED: %v", nhqerr)
 		}
 
-		// Case first one ..
-		if hd.splitterState.currentHansardPages != nil {
+		// Avoids special case for first iteration ..
+		if hd.splitterState.lastMarkedQuestionNum != "" {
+			// If needed, wrap up the previous Question ..
+			// NOT needed; is ahndeld in previous cycle ..
+			//pageNumEnd, err := strconv.Atoi(hd.splitterState.lastMarkedQuestionNum)
+			//if err != nil {
+			//	return err
+			//}
+			//hansardQuestion.pageNumEnd = pageNumEnd
 			// Finalize from previous run; careful about off by one
 			hansardQuestion.pages = hd.splitterState.currentHansardPages
 			// Append the question AFTER appending the page!
@@ -119,6 +157,9 @@ func (hd *HansardDocument) ProcessLinesExcerpt(pageNum int, linesExcerpt []strin
 		newPage.possibleQuestionNum = possibleQuestionNum
 		newPage.plainTextContent = "" // WHY is this here? Remove?
 		// New one gets overwritten; will it get lost? or copied?
+		// reset to new state
+		hd.splitterState.lastMarkedQuestionNum = possibleQuestionNum
+		hd.splitterState.currentHansardQuestion = hansardQuestion
 		hd.splitterState.currentHansardPages = []HansardPage{newPage}
 
 	} else {
@@ -128,10 +169,12 @@ func (hd *HansardDocument) ProcessLinesExcerpt(pageNum int, linesExcerpt []strin
 		newPage.plainTextContent = "" // WHY is this here? Remove?
 		// Track current page; attach to existing one already ..
 		hd.splitterState.currentHansardPages = append(hd.splitterState.currentHansardPages, newPage)
+		// Up the page number to the current
+		hd.splitterState.currentHansardQuestion.pageNumEnd = pageNum
 	}
 
-	// If found a new question; create a new HansardQuestion
-	// else attach the HansardPage to it and update metadata
+	// Mark tis invariant?
+	hd.splitterState.lastMarkedPage = pageNum
 
 	return nil
 }
@@ -141,9 +184,33 @@ func (hd *HansardDocument) String() {
 	spew.Dump(hd)
 }
 
+// Finalize clean up all state and put it back into the structure
+// TODO: Refactor this to be one clear structure
+func (hd *HansardDocument) Finalize() {
+	// Finalize from previous run; this will clean up any remaining
+	hansardQuestion := hd.splitterState.currentHansardQuestion
+	hansardQuestion.pages = hd.splitterState.currentHansardPages
+	hd.HansardQuestions = append(hd.HansardQuestions, *hansardQuestion)
+
+	// Clear out splitter state
+	hd.splitterState = splitterState{}
+}
+
+// Debug function to dump out final state; it should be cleared after all the run ..
+func (hd *HansardDocument) ShowState() {
+	spew.Dump(hd.splitterState)
+}
+
+func (hd *HansardDocument) ShowQuestions() {
+	spew.Dump(hd.HansardQuestions)
+}
+
 // SplitPDFByQuestions output to actual PDF based on derived data
 func (hd *HansardDocument) SplitPDFByQuestions() error {
 	// Guard checks; whgat if got nothing; check length ..
+	for _, singleQuestion := range hd.HansardQuestions {
+		fmt.Println("QUESTION: ", singleQuestion.questionNum, " START: ", singleQuestion.pageNumStart, " END: ", singleQuestion.pageNumEnd)
+	}
 	return nil
 }
 
