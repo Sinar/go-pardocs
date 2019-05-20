@@ -131,14 +131,10 @@ func (hd *HansardDocument) ProcessLinesExcerpt(pageNum int, linesExcerpt []strin
 	//fmt.Println("STATE: ", hd.splitterState)
 	// if empty; just initialize it with the question mapped
 	if possibleQuestionNum != hd.splitterState.lastMarkedQuestionNum {
-		// Create new Question struct and attach it
-		hansardQuestion, nhqerr := NewHansardQuestion(pageNum, possibleQuestionNum)
-		if nhqerr != nil {
-			return fmt.Errorf("NewHansardQuestion: FAILED: %v", nhqerr)
-		}
-
 		// Avoids special case for first iteration ..
 		if hd.splitterState.lastMarkedQuestionNum != "" {
+			// NOTE: SCOPED; for temp use
+			hansardQuestion := hd.splitterState.currentHansardQuestion
 			// If needed, wrap up the previous Question ..
 			// NOT needed; is ahndeld in previous cycle ..
 			//pageNumEnd, err := strconv.Atoi(hd.splitterState.lastMarkedQuestionNum)
@@ -150,6 +146,12 @@ func (hd *HansardDocument) ProcessLinesExcerpt(pageNum int, linesExcerpt []strin
 			hansardQuestion.pages = hd.splitterState.currentHansardPages
 			// Append the question AFTER appending the page!
 			hd.HansardQuestions = append(hd.HansardQuestions, *hansardQuestion)
+		}
+
+		// Create new Question struct and attach it for the current page
+		hansardQuestion, nhqerr := NewHansardQuestion(pageNum, possibleQuestionNum)
+		if nhqerr != nil {
+			return fmt.Errorf("NewHansardQuestion: FAILED: %v", nhqerr)
 		}
 
 		// Reset state
