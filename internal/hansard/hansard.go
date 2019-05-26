@@ -2,9 +2,12 @@ package hansard
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"regexp"
 
 	"github.com/davecgh/go-spew/spew"
+	"gopkg.in/yaml.v2"
 )
 
 type HansardPage struct {
@@ -16,10 +19,10 @@ type HansardPage struct {
 }
 
 type HansardQuestion struct {
-	questionNum           string
+	QuestionNum           string
 	questionNumberSnippet string
-	pageNumStart          int
-	pageNumEnd            int
+	PageNumStart          int
+	PageNumEnd            int
 	pages                 []HansardPage
 }
 
@@ -97,7 +100,7 @@ func detectPossibleQuestionNum(linesExcerpt []string) (possibleQuestionNum strin
 
 func NewHansardQuestion(pageNumStart int, possibleQuestionNum string) (*HansardQuestion, error) {
 	// Guard rail
-	//pageNumStart, err := strconv.Atoi(possibleQuestionNum)
+	//PageNumStart, err := strconv.Atoi(possibleQuestionNum)
 	//if err != nil {
 	//	return nil, err
 	//}
@@ -133,7 +136,7 @@ func (hd *HansardDocument) ProcessLinesExcerpt(pageNum int, linesExcerpt []strin
 	// DEBUG
 	//fmt.Println("STATE: ", hd.splitterState)
 
-	// if found a genuine questionNum NOT matching lastMarkedQ; then execute; too narrow; there are  other scenarios
+	// if found a genuine QuestionNum NOT matching lastMarkedQ; then execute; too narrow; there are  other scenarios
 	if possibleQuestionNum != "" && possibleQuestionNum != hd.splitterState.lastMarkedQuestionNum {
 		// Avoids special case for first iteration ..
 		if hd.splitterState.lastMarkedQuestionNum != "" {
@@ -183,7 +186,7 @@ func (hd *HansardDocument) ProcessLinesExcerpt(pageNum int, linesExcerpt []strin
 		// Track current page; attach to existing one already ..
 		hd.splitterState.currentHansardPages = append(hd.splitterState.currentHansardPages, newPage)
 		// Up the page number to the current
-		hd.splitterState.currentHansardQuestion.pageNumEnd = pageNum
+		hd.splitterState.currentHansardQuestion.PageNumEnd = pageNum
 	}
 
 	// Mark tis invariant?
@@ -222,11 +225,55 @@ func (hd *HansardDocument) ShowQuestions() {
 func (hd *HansardDocument) SplitPDFByQuestions() error {
 	// Guard checks; whgat if got nothing; check length ..
 	for _, singleQuestion := range hd.HansardQuestions {
-		fmt.Println("QUESTION: ", singleQuestion.questionNum, " START: ", singleQuestion.pageNumStart, " END: ", singleQuestion.pageNumEnd)
+		fmt.Println("QUESTION: ", singleQuestion.QuestionNum, " START: ", singleQuestion.PageNumStart, " END: ", singleQuestion.PageNumEnd)
 	}
 	return nil
 }
 
 func Split(t string, c string) []string {
 	return []string{"bob"}
+}
+
+func (hd *HansardDocument) PersistForSplit(absoluteRawDataPath string) error {
+
+	// TODO: Restructure so that it is driven by the type? Or do we have full control?
+	rawDataFolderSetup(absoluteRawDataPath)
+	//spew.Dump(hd)
+	b, err := yaml.Marshal(hd.HansardQuestions)
+	if err != nil {
+		panic(err)
+	}
+
+	werr := ioutil.WriteFile(absoluteRawDataPath+"/split.yml", b, 0744)
+	if werr != nil {
+		panic(werr)
+	}
+
+	return nil
+}
+
+// Need to restructure this utility func; I am sure there is a better implementation ;P
+func rawDataFolderSetup(absoluteRawDataPath string) (proceedScraping bool) {
+	fi, lerr := os.Stat(absoluteRawDataPath)
+	if lerr != nil {
+		if os.IsNotExist(lerr) {
+			// Create the needed folder as per needed .. all along the chain
+			mkerr := os.MkdirAll(absoluteRawDataPath, 0700)
+			if mkerr != nil {
+				panic(mkerr)
+			}
+			return true
+		}
+		panic(lerr)
+	} else {
+		// spew.Dump(fi)
+		if !fi.IsDir() {
+			panic(fmt.Errorf("NOT DIR!! %s", absoluteRawDataPath))
+		}
+		fmt.Println("Directory ", absoluteRawDataPath, " EXISTS!!")
+		// When the folder already exist for the day, no need to proceed
+		fmt.Println("Skipping... ")
+	}
+
+	return false
 }

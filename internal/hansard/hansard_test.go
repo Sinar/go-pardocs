@@ -164,9 +164,9 @@ func TestHansardDocument_SplitPDFByQuestions(t *testing.T) {
 
 func SetupHansardQuestion(questionNum string, pageNumStart int, pageNumEnd int) []HansardQuestion {
 	hq := []HansardQuestion{
-		{questionNum: "35", pageNumStart: 1, pageNumEnd: 1},
-		{questionNum: "36", pageNumStart: 2, pageNumEnd: 3},
-		{questionNum: "37", pageNumStart: 4, pageNumEnd: 5},
+		{QuestionNum: "35", PageNumStart: 1, PageNumEnd: 1},
+		{QuestionNum: "36", PageNumStart: 2, PageNumEnd: 3},
+		{QuestionNum: "37", PageNumStart: 4, PageNumEnd: 5},
 	}
 	return hq
 }

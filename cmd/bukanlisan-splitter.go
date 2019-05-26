@@ -18,10 +18,11 @@ func SplitBukanLisanPDFs() {
 	//pdfPath := "./raw/BukanLisan/split/Pertanyaan Jawapan Bukan Lisan 22019_76-90.pdf"
 	//pdfPath := "./raw/JawatanKuasa/rumusan-laporan-akhir-jawatankuasa-siasatan-tadbir-urus-perolehan-dan-kewangan-kerajaan-mengenai-projek-land-swap-di-bawah-kementerian-pertahanan.pdf"
 	// Test some  BukanLisan
-	//pdfPath := "./raw/BukanLisan"
+	pdfPath := "./raw/BukanLisan/"
+	pdfPath += "Pertanyaan Jawapan Bukan Lisan 22019.pdf"
 
 	// Test some Lisan throughout the years ..
-	pdfPath := "./raw/Lisan/"
+	//pdfPath := "./raw/Lisan/"
 	//pdfPath += "20140327__DR_JawabLisan.pdf" // <-- Good test case which causes panic in the pdf lib itself!
 
 	//pdfPath += "20140327__DR_JawabLisan_clean.pdf" //  <-- A save and using OSX Preview resolves the problem!
@@ -39,7 +40,7 @@ func SplitBukanLisanPDFs() {
 	//pdfPath += "JWP DR 161018.pdf" // <-- Looks OK
 
 	//pdfPath += "JWP DR 151018.pdf" // Another case  of partially bad PDF
-	pdfPath += "JWP DR 151018_clean.pdf" // Clean up will solve the problem
+	//pdfPath += "JWP DR 151018_clean.pdf" // Clean up will solve the problem
 
 	pdfDoc, err := hansard.NewPDFDoc(pdfPath)
 	if err != nil {
@@ -86,7 +87,18 @@ func SplitBukanLisanPDFs() {
 	//hansardDoc.ShowQuestions()
 
 	// Split based on the planned structure
-	hansardDoc.SplitPDFByQuestions()
+	//hansardDoc.SplitPDFByQuestions()
+
+	switch hansardDoc.HansardType {
+	case hansard.HANSARD_SPOKEN:
+		hansardDoc.PersistForSplit("./data/Lisan")
+	case hansard.HANSARD_WRITTEN:
+		hansardDoc.PersistForSplit("./data/BukanLisan")
+	default:
+		panic(fmt.Errorf("INVALUED TYPE!!!"))
+
+	}
+
 	// TODO: Needs a wrap up state for the last state left ..
 	// After the split; we should have the HansardQuestions
 	//hansardDoc.String()
