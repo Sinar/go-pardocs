@@ -35,7 +35,6 @@ func NewPDFDoc(sourcePath string) (*PDFDocument, error) {
 	exerr := pdfDoc.extractPDF()
 	if exerr != nil {
 		panic(exerr)
-
 	}
 	return &pdfDoc, nil
 
@@ -59,7 +58,7 @@ func (pdfDoc *PDFDocument) extractPDF() error {
 	// iterate through all the pages one by one
 	pdfDoc.NumPages = r.NumPage()
 	// DEBUG
-	pdfDoc.NumPages = 5
+	//pdfDoc.NumPages = 7
 	for i := 1; i <= pdfDoc.NumPages; i++ {
 		// init
 		pdfPage := PDFPage{}

@@ -117,6 +117,9 @@ func NewHansardQuestion(pageNumStart int, possibleQuestionNum string) (*HansardQ
 
 // ProcessLinesExcerpt takes the extracted excerpt; and pull out all the metadata
 func (hd *HansardDocument) ProcessLinesExcerpt(pageNum int, linesExcerpt []string) error {
+	// DEBUG: INput
+	//spew.Dump(linesExcerpt)
+
 	// If found a new question; create a new HansardQuestion
 	// else attach the HansardPage to it and update metadata
 
@@ -129,21 +132,19 @@ func (hd *HansardDocument) ProcessLinesExcerpt(pageNum int, linesExcerpt []strin
 	}
 	// DEBUG
 	//fmt.Println("STATE: ", hd.splitterState)
-	// if empty; just initialize it with the question mapped
-	if possibleQuestionNum != hd.splitterState.lastMarkedQuestionNum {
+
+	// if found a genuine questionNum NOT matching lastMarkedQ; then execute; too narrow; there are  other scenarios
+	if possibleQuestionNum != "" && possibleQuestionNum != hd.splitterState.lastMarkedQuestionNum {
 		// Avoids special case for first iteration ..
 		if hd.splitterState.lastMarkedQuestionNum != "" {
+			// DEBUG:
+			//fmt.Println("PAGE", pageNum, " POSSIBLE Q: ", possibleQuestionNum)
 			// NOTE: SCOPED; for temp use
 			hansardQuestion := hd.splitterState.currentHansardQuestion
-			// If needed, wrap up the previous Question ..
-			// NOT needed; is ahndeld in previous cycle ..
-			//pageNumEnd, err := strconv.Atoi(hd.splitterState.lastMarkedQuestionNum)
-			//if err != nil {
-			//	return err
-			//}
-			//hansardQuestion.pageNumEnd = pageNumEnd
 			// Finalize from previous run; careful about off by one
 			hansardQuestion.pages = hd.splitterState.currentHansardPages
+			// DEBUG:
+			//spew.Dump(hansardQuestion.pages)
 			// Append the question AFTER appending the page!
 			hd.HansardQuestions = append(hd.HansardQuestions, *hansardQuestion)
 		}
@@ -165,6 +166,16 @@ func (hd *HansardDocument) ProcessLinesExcerpt(pageNum int, linesExcerpt []strin
 		hd.splitterState.currentHansardPages = []HansardPage{newPage}
 
 	} else {
+		//  If is the start; we can attach special rules for extracting out
+		// info like what session it is, ToC, and other stuff; for now; just ignore it
+		if hd.splitterState.lastMarkedPage == 0 {
+			//spew.Dump(hd.splitterState)
+			fmt.Println("Probably front page; do semthign with this ..")
+			// DEBUG:
+			//spew.Dump(linesExcerpt)
+			return nil
+		}
+
 		// just append the pages; with know metadata info ..
 		newPage.isPossibleStartofQuestion = false
 		newPage.possibleQuestionNum = hd.splitterState.lastMarkedQuestionNum

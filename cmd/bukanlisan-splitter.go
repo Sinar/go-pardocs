@@ -14,8 +14,33 @@ func SplitBukanLisanPDFs() {
 	// $ file ~/Downloads/Pertanyaan\ Jawapan\ Bukan\ Lisan\ 22019.pdf
 	// 		/Users/mleow/Downloads/Pertanyaan Jawapan Bukan Lisan 22019.pdf: PDF document, version 1.7
 	//pdfDoc := hansard.PDFDocument{}
-	pdfPath := "./raw/BukanLisan/split/Pertanyaan Jawapan Bukan Lisan 22019_76-90.pdf"
+
+	//pdfPath := "./raw/BukanLisan/split/Pertanyaan Jawapan Bukan Lisan 22019_76-90.pdf"
 	//pdfPath := "./raw/JawatanKuasa/rumusan-laporan-akhir-jawatankuasa-siasatan-tadbir-urus-perolehan-dan-kewangan-kerajaan-mengenai-projek-land-swap-di-bawah-kementerian-pertahanan.pdf"
+	// Test some  BukanLisan
+	//pdfPath := "./raw/BukanLisan"
+
+	// Test some Lisan throughout the years ..
+	pdfPath := "./raw/Lisan/"
+	//pdfPath += "20140327__DR_JawabLisan.pdf" // <-- Good test case which causes panic in the pdf lib itself!
+
+	//pdfPath += "20140327__DR_JawabLisan_clean.pdf" //  <-- A save and using OSX Preview resolves the problem!
+	// Above has test cases:
+	// QUESTION:  2013  START:  70  END:  70 <-- possibly sanity check that question is highly likely next running number
+	// QUESTION:    START:  199  END:  201 <-- Finalizer cannot attach to the last remaining question
+
+	//pdfPath += "JWP DR 031218.pdf" // <--  ALso have bad ; no codespace ..
+	//pdfPath += "JDR25032019.pdf" // <-- Good test case for bad  rune; no codespace
+	// Above has  test cases:
+	//  Rune that fails regexp - "SOALAN� �NO.� �1� "
+	// Edge case off by one question
+
+	//pdfPath += "JDR12032019.pdf" // <-- Looks ok on first draft
+	//pdfPath += "JWP DR 161018.pdf" // <-- Looks OK
+
+	//pdfPath += "JWP DR 151018.pdf" // Another case  of partially bad PDF
+	pdfPath += "JWP DR 151018_clean.pdf" // Clean up will solve the problem
+
 	pdfDoc, err := hansard.NewPDFDoc(pdfPath)
 	if err != nil {
 		panic(err)
@@ -56,9 +81,9 @@ func SplitBukanLisanPDFs() {
 
 	hansardDoc.Finalize()
 	// DEBUG:
-	hansardDoc.ShowState()
+	// hansardDoc.ShowState()
 	fmt.Println("=== QUESTIONS ****************")
-	hansardDoc.ShowQuestions()
+	//hansardDoc.ShowQuestions()
 
 	// Split based on the planned structure
 	hansardDoc.SplitPDFByQuestions()
