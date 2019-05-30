@@ -6,6 +6,14 @@ import (
 	"github.com/Sinar/go-pardocs/internal/hansard"
 )
 
+func ExecuteSplitPlan() {
+	splitPlan := hansard.NewMockSplitPlan()
+
+	for _, q := range splitPlan {
+		q.ExecuteSplit()
+	}
+}
+
 func SplitBukanLisanPDFs() {
 	fmt.Println("In SplitBukanLisanPDFs ...")
 	// Break apart full document into a PDF struct for analysis

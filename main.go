@@ -12,7 +12,9 @@ func main() {
 
 	flag.Parse()
 
-	// Actual
-	cmd.SplitBukanLisanPDFs()
+	// Actual planning
+	//cmd.SplitBukanLisanPDFs()
+	// Test split
+	cmd.ExecuteSplitPlan()
 
 }
