@@ -20,6 +20,7 @@ go-pardocs
 # Ignore raw + split  folders
 raw/*
 split/*
+splitout/*
 
 # Ignore Goland
 .idea/*
