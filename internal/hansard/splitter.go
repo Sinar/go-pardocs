@@ -8,6 +8,14 @@ import (
 	"github.com/y0ssar1an/q"
 )
 
+type SplitHansardDocument struct {
+	HansardType     HansardType
+	SessionName     string // Get this from the front page cover .. or the reference lookup ..
+	OriginalPDFPath string // Used for split later ..
+	DestSplitPDFs   string // Directory to store the final split items; default to ./data/<HansardType>/<SessionName>/
+	SplitPlans      []SplitPlan
+}
+
 type SplitPlan struct {
 	QuestionNum  string
 	PageNumStart int
@@ -15,9 +23,31 @@ type SplitPlan struct {
 }
 
 // NewSplitPlan will use a Reader (better!) to extract out the plan
-func NewSplitPlan(planFilename string) []SplitPlan {
+func NewSplitHansardDocument(planFilename string, hansardType HansardType, sessionName string, originalPDFPath string) *SplitHansardDocument {
 	// TODO: Read the plan file
 	return nil
+}
+
+func (shd *SplitHansardDocument) PrepareExecuteSplit(destSplitPDFs string) error {
+	return nil
+}
+
+func extractCoverPage(hansardType HansardType, originalPDFPath string) []string {
+	var contentCoverPage []string
+
+	// Based on the type of document; might have different interpretations of Cover Page
+	// e.g state assembly might have Attendance Sheet? and/or proper ToC?
+
+	return contentCoverPage
+}
+
+func detectSessionName(hansardType HansardType, sourcePDFFileName string, contentCoverPage []string) string {
+	// Guardrail; check no pdf; and is not some sort of basefilename?
+
+	// Look for common pattern based on the type ..
+
+	// Can;t find aything; just return sourcePDFFileName! with [^[:alphanum:]] replaced with single -
+	return sourcePDFFileName
 }
 
 // NewMockSplitPlan returns
@@ -33,34 +63,39 @@ func NewMockSplitPlan() []SplitPlan {
 	}
 }
 
-func (sp *SplitPlan) ExecuteSplit(label string) {
-	outputFilename := fmt.Sprintf("%s-soalan-%s-bukanlisan", label, sp.QuestionNum)
-	fmt.Println("====== ", outputFilename, " =======")
+func (sp *SplitPlan) PrepareSplit(originalFilename string) {
+	// If no pdf, append PDF
+	// check actual type via MIME? or ext?
+	// Build out the full path ..
+	rawBasePath := "/Users/mleow/GOMOD/go-pardocs/raw/"
 
-	pageSelection := fmt.Sprintf("%d-%d", sp.PageNumStart, sp.PageNumEnd)
-
-	conf := pdfcpu.NewDefaultConfiguration()
-	//conf.Cmd = pdfcpu.CommandMode(pdfcpu.SPLIT)
-
-	// Use UNIX EOL?
-	//wctx := pdfcpu.NewWriteContext(pdfcpu.EolLF)
-	//wctx.DirName = "/tmp/"
-	//wctx.FileName = "bob.pdf"
-	//wctx.SelectedPages = pdfcpu.IntSet{pageSelection}
-	//cmd := papi.SplitCommand("filenamein", "/tmp", 5, conf)
-
-	baseRawDir := "/Users/mleow/GOMOD/go-pardocs/raw/BukanLisan"
-	inputFileName := "Pertanyaan Jawapan Bukan Lisan 22019_new.pdf"
-	fullInputPath := baseRawDir + "/" + inputFileName
-
-	// For each question + folder combo
-	// Extract out the only file there?
-	// and put path into merge string; put in correct order ..
-
-	cmd := papi.ExtractPagesCommand(fullInputPath, fmt.Sprintf("/tmp/go-pardocs/%d", 1), []string{pageSelection}, conf)
+	cmd := papi.SplitCommand(rawBasePath+originalFilename, "/tmp/BukanLisan", 1, pdfcpu.NewDefaultConfiguration())
 	o, perr := papi.Process(cmd)
 	if perr != nil {
 		panic(perr)
+	}
+	// What is the output??
+	q.Q(o)
+}
+
+func (sp *SplitPlan) ExecuteSplit(label string) {
+	// TODO: Guardrail; check first that Prepare split is already there; full doc split out
+	// into /tmp/split/<file_basename>/<file_basename>_<pagenum>/pdf
+
+	outputFilename := fmt.Sprintf("%s-soalan-%s-bukanlisan", label, sp.QuestionNum)
+	fmt.Println("====== ", outputFilename, " =======")
+
+	var pagesToMerge []string
+
+	for i := sp.PageNumStart; i <= sp.PageNumEnd; i++ {
+		pagesToMerge = append(pagesToMerge, fmt.Sprintf("/tmp/BukanLisan/Pertanyaan Jawapan Bukan Lisan 22019_new_%d.pdf", i))
+	}
+	q.Q(pagesToMerge)
+
+	cmd := papi.MergeCommand(pagesToMerge, "/tmp/BukanLisan/EXTRACT.pdf", pdfcpu.NewDefaultConfiguration())
+	o, merr := papi.Process(cmd)
+	if merr != nil {
+		panic(merr)
 	}
 	q.Q(o)
 

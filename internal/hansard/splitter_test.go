@@ -1,29 +1,49 @@
 package hansard
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
-func TestSplitPlan_ExecuteSplit(t *testing.T) {
-	type fields struct {
-		QuestionNum  string
-		PageNumStart int
-		PageNumEnd   int
+func Test_detectSessionName(t *testing.T) {
+	type args struct {
+		hansardType        HansardType
+		sourcePDFFileName  string
+		contentofFirstPage []string
 	}
 	tests := []struct {
-		name   string
-		label  string
-		fields fields
+		name string
+		args args
+		want string
 	}{
-		{"test #1", "par14-sesi1", fields{"3", 5, 6}},
+		// TODO: Add test cases.
 	}
-	// Output file: <Label>-soalan-<QuestionNum>.pdf
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sp := &SplitPlan{
-				QuestionNum:  tt.fields.QuestionNum,
-				PageNumStart: tt.fields.PageNumStart,
-				PageNumEnd:   tt.fields.PageNumEnd,
+			if got := detectSessionName(tt.args.hansardType, tt.args.sourcePDFFileName, tt.args.contentofFirstPage); got != tt.want {
+				t.Errorf("detectSessionName() = %v, want %v", got, tt.want)
 			}
-			sp.ExecuteSplit(tt.label)
+		})
+	}
+}
+
+func Test_extractCoverPage(t *testing.T) {
+	type args struct {
+		hansardType     HansardType
+		originalPDFPath string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := extractCoverPage(tt.args.hansardType, tt.args.originalPDFPath); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("extractCoverPage() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
