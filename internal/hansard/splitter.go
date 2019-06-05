@@ -2,6 +2,9 @@ package hansard
 
 import (
 	"fmt"
+	"io/ioutil"
+
+	yaml "gopkg.in/yaml.v2"
 
 	papi "github.com/hhrutter/pdfcpu/pkg/api"
 	"github.com/hhrutter/pdfcpu/pkg/pdfcpu"
@@ -9,11 +12,13 @@ import (
 )
 
 type SplitHansardDocument struct {
-	HansardType     HansardType
-	SessionName     string // Get this from the front page cover .. or the reference lookup ..
-	OriginalPDFPath string // Used for split later ..
-	DestSplitPDFs   string // Directory to store the final split items; default to ./data/<HansardType>/<SessionName>/
-	SplitPlans      []SplitPlan
+	Label            string
+	HansardType      HansardType
+	SessionName      string // Get this from the front page cover .. or the reference lookup ..
+	WorkingDirectory string // defaults to cwd if not defined ..
+	OriginalPDFPath  string // Used for split later ..
+	DestSplitPDFs    string // Directory to store the final split items; default to ./data/<HansardType>/<SessionName>/
+	SplitPlans       []SplitPlan
 }
 
 type SplitPlan struct {
@@ -23,13 +28,79 @@ type SplitPlan struct {
 }
 
 // NewSplitPlan will use a Reader (better!) to extract out the plan
-func NewSplitHansardDocument(planFilename string, hansardType HansardType, sessionName string, originalPDFPath string) *SplitHansardDocument {
+func NewSplitHansardDocument(label string, currentWorkingDir string, planFilename string, hansardType HansardType, sessionName string, originalPDFPath string) *SplitHansardDocument {
+	splitHansardDocument := SplitHansardDocument{
+		Label:            label,
+		HansardType:      hansardType,
+		SessionName:      sessionName,
+		WorkingDirectory: currentWorkingDir,
+		OriginalPDFPath:  originalPDFPath,
+	}
+	// Use mock for simpler cases ..
+	splitHansardDocument.SplitPlans = NewMockSplitPlan()
 	// TODO: Read the plan file
-	return nil
+
+	b, rerr := ioutil.ReadFile(planFilename)
+	if rerr != nil {
+		panic(rerr)
+	}
+	umerr := yaml.Unmarshal(b, &splitHansardDocument.SplitPlans)
+	if umerr != nil {
+		panic(umerr)
+	}
+	return &splitHansardDocument
 }
 
-func (shd *SplitHansardDocument) PrepareExecuteSplit(destSplitPDFs string) error {
-	return nil
+func (shd *SplitHansardDocument) PrepareExecuteSplit() {
+	// If the split document does not exist; call the Prepare
+	var hansardType string
+	switch shd.HansardType {
+	case HANSARD_WRITTEN:
+		hansardType = "BukanLisan"
+
+	case HANSARD_SPOKEN:
+		hansardType = "Lisan"
+
+	default:
+		panic(fmt.Errorf("Incorrect TYPE: %#v", shd.HansardType))
+	}
+
+	proceedPrepare := rawDataFolderSetup(fmt.Sprintf("./raw/splitout/%s/%s/pages/", hansardType, shd.SessionName))
+	if proceedPrepare {
+		shd.PrepareSplit()
+	}
+
+	for _, sp := range shd.SplitPlans {
+		sp.ExecuteSplit(shd.SessionName)
+	}
+}
+
+// TODO: Refactor to local and group it out ..
+func (shd *SplitHansardDocument) PrepareSplit() {
+	// If no pdf, append PDF
+	// check actual type via MIME? or ext?
+	// Build out the full path ..
+	//rawBasePath := "/Users/mleow/GOMOD/go-pardocs/raw/"
+	//
+	var hansardType string
+	switch shd.HansardType {
+	case HANSARD_WRITTEN:
+		hansardType = "BukanLisan"
+
+	case HANSARD_SPOKEN:
+		hansardType = "Lisan"
+
+	default:
+		panic(fmt.Errorf("Incorrect TYPE: %#v", shd.HansardType))
+	}
+	// Assumes created ?
+	cmd := papi.SplitCommand(shd.OriginalPDFPath, fmt.Sprintf("./raw/splitout/%s/%s/pages/", hansardType, shd.SessionName), 1, pdfcpu.NewDefaultConfiguration())
+	o, perr := papi.Process(cmd)
+	if perr != nil {
+		panic(perr)
+	}
+	// What is the output??
+	q.Q(o)
 }
 
 func extractCoverPage(hansardType HansardType, originalPDFPath string) []string {
@@ -61,21 +132,6 @@ func NewMockSplitPlan() []SplitPlan {
 		{"5", 9, 9},
 		{"6", 10, 12},
 	}
-}
-
-func (sp *SplitPlan) PrepareSplit(originalFilename string) {
-	// If no pdf, append PDF
-	// check actual type via MIME? or ext?
-	// Build out the full path ..
-	rawBasePath := "/Users/mleow/GOMOD/go-pardocs/raw/"
-
-	cmd := papi.SplitCommand(rawBasePath+originalFilename, "/tmp/BukanLisan", 1, pdfcpu.NewDefaultConfiguration())
-	o, perr := papi.Process(cmd)
-	if perr != nil {
-		panic(perr)
-	}
-	// What is the output??
-	q.Q(o)
 }
 
 func (sp *SplitPlan) ExecuteSplit(label string) {
