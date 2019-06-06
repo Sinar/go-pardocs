@@ -38,9 +38,9 @@ func NewSplitHansardDocument(label string, currentWorkingDir string, planFilenam
 	}
 	// Use mock for simpler cases ..
 	splitHansardDocument.SplitPlans = NewMockSplitPlan()
-	// TODO: Read the plan file
 
-	b, rerr := ioutil.ReadFile(planFilename)
+	// Read the plan file
+	b, rerr := ioutil.ReadFile(fmt.Sprintf("%s/%s", currentWorkingDir, planFilename))
 	if rerr != nil {
 		panic(rerr)
 	}
@@ -65,18 +65,20 @@ func (shd *SplitHansardDocument) PrepareExecuteSplit() {
 		panic(fmt.Errorf("Incorrect TYPE: %#v", shd.HansardType))
 	}
 
-	proceedPrepare := rawDataFolderSetup(fmt.Sprintf("./raw/splitout/%s/%s/pages/", hansardType, shd.SessionName))
+	proceedPrepare := rawDataFolderSetup(fmt.Sprintf("%s/raw/splitout/%s/%s/pages/", shd.WorkingDirectory, hansardType, shd.SessionName))
 	if proceedPrepare {
+		fmt.Println("OK; splitting!!")
 		shd.PrepareSplit()
 	}
 
 	for _, sp := range shd.SplitPlans {
-		sp.ExecuteSplit(shd.SessionName)
+		sp.ExecuteSplit(shd.WorkingDirectory, hansardType, shd.SessionName, shd.Label)
 	}
 }
 
 // TODO: Refactor to local and group it out ..
 func (shd *SplitHansardDocument) PrepareSplit() {
+	fmt.Println("In shd.PrepareSplit ..")
 	// If no pdf, append PDF
 	// check actual type via MIME? or ext?
 	// Build out the full path ..
@@ -94,12 +96,15 @@ func (shd *SplitHansardDocument) PrepareSplit() {
 		panic(fmt.Errorf("Incorrect TYPE: %#v", shd.HansardType))
 	}
 	// Assumes created ?
-	cmd := papi.SplitCommand(shd.OriginalPDFPath, fmt.Sprintf("./raw/splitout/%s/%s/pages/", hansardType, shd.SessionName), 1, pdfcpu.NewDefaultConfiguration())
+	cmd := papi.SplitCommand(fmt.Sprintf("%s/%s", shd.WorkingDirectory, shd.OriginalPDFPath),
+		fmt.Sprintf("%s/raw/splitout/%s/%s/pages/", shd.WorkingDirectory, hansardType, shd.SessionName),
+		1, pdfcpu.NewDefaultConfiguration())
 	o, perr := papi.Process(cmd)
 	if perr != nil {
 		panic(perr)
 	}
 	// What is the output??
+	// DEBUG
 	q.Q(o)
 }
 
@@ -134,25 +139,27 @@ func NewMockSplitPlan() []SplitPlan {
 	}
 }
 
-func (sp *SplitPlan) ExecuteSplit(label string) {
+func (sp *SplitPlan) ExecuteSplit(currentWorkingDir string, hansardType string, sessionName string, label string) {
 	// TODO: Guardrail; check first that Prepare split is already there; full doc split out
 	// into /tmp/split/<file_basename>/<file_basename>_<pagenum>/pdf
-
-	outputFilename := fmt.Sprintf("%s-soalan-%s-bukanlisan", label, sp.QuestionNum)
-	fmt.Println("====== ", outputFilename, " =======")
 
 	var pagesToMerge []string
 
 	for i := sp.PageNumStart; i <= sp.PageNumEnd; i++ {
-		pagesToMerge = append(pagesToMerge, fmt.Sprintf("/tmp/BukanLisan/Pertanyaan Jawapan Bukan Lisan 22019_new_%d.pdf", i))
+		sourcePDFPath := fmt.Sprintf("%s/raw/splitout/%s/%s/pages/%s_%d.pdf", currentWorkingDir, hansardType, sessionName, sessionName, i)
+		pagesToMerge = append(pagesToMerge, sourcePDFPath)
 	}
-	q.Q(pagesToMerge)
+	// DEBUG
+	//q.Q(pagesToMerge)
 
-	cmd := papi.MergeCommand(pagesToMerge, "/tmp/BukanLisan/EXTRACT.pdf", pdfcpu.NewDefaultConfiguration())
+	finalMergedPDFPath := fmt.Sprintf("%s/splitout/%s-soalan-%s-%s.pdf", currentWorkingDir, label, hansardType, sp.QuestionNum)
+	fmt.Println(">>>=========== Merged file at: ", finalMergedPDFPath, " ==============<<<<<<")
+	cmd := papi.MergeCommand(pagesToMerge, finalMergedPDFPath, pdfcpu.NewDefaultConfiguration())
 	o, merr := papi.Process(cmd)
 	if merr != nil {
 		panic(merr)
 	}
+	// DEBUG
 	q.Q(o)
 
 }
