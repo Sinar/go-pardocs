@@ -2,7 +2,7 @@ run: build
 	@./go-pardocs
     
 build: test
-	@go build .
+	@go build ./cmd/go-pardocs
 
 test:
 	@go test .

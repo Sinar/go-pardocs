@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/y0ssar1an/q"
 	"gopkg.in/yaml.v2"
 )
 
@@ -225,7 +226,7 @@ func (hd *HansardDocument) ShowQuestions() {
 func (hd *HansardDocument) SplitPDFByQuestions() error {
 	// Guard checks; whgat if got nothing; check length ..
 	for _, singleQuestion := range hd.HansardQuestions {
-		fmt.Println("QUESTION: ", singleQuestion.QuestionNum, " START: ", singleQuestion.PageNumStart, " END: ", singleQuestion.PageNumEnd)
+		q.Q("QUESTION: ", singleQuestion.QuestionNum, " START: ", singleQuestion.PageNumStart, " END: ", singleQuestion.PageNumEnd)
 	}
 	return nil
 }

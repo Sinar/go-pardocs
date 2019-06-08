@@ -55,7 +55,8 @@ func TestHansardDocument_SplitPDFByQuestions(t *testing.T) {
 		wantErr bool
 	}{
 		// TODO: Add test cases.
-		{"test case #1", fields{hansard.HANSARD_WRITTEN, "PAR14-April-2019", hansard.SetupHansardQuestion("37", 4, 5)}, false},
+		//{"test case #1", fields{hansard.HANSARD_WRITTEN, "PAR14-April-2019", hansard.SetupHansardQuestion("37", 4, 5)}, false},
+		{"test case #2", fields{hansard.HANSARD_WRITTEN, "PAR14-April-2019", hansard.SetupHansardQuestion("1", 2, 2)}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

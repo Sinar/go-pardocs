@@ -10,7 +10,7 @@ func ExecuteSplitPlan() {
 	splitPlan := hansard.NewMockSplitPlan()
 
 	for _, q := range splitPlan {
-		q.ExecuteSplit()
+		//q.ExecuteSplit()
 	}
 }
 

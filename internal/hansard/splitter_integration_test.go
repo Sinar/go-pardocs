@@ -46,13 +46,13 @@ func TestSplitHansardDocument_PrepareExecuteSplit(t *testing.T) {
 		name string
 		args args
 	}{
-		{"test #1", args{"par14sesi1", "/Users/mleow/GOMOD/go-pardocs",
+		{"test #1", args{"par14sesi1", "/Users/leow/GOMOD/go-go-pardocs",
 			"./data/BukanLisan/split.yml", hansard.HANSARD_WRITTEN,
 			"Pertanyaan Jawapan Bukan Lisan 22019_new",
 			"./raw/BukanLisan/Pertanyaan Jawapan Bukan Lisan 22019_new.pdf",
 		}},
-		//{"test #1", args{"./data/BukanLisan/split.yml", hansard.HANSARD_WRITTEN, "", "/Users/mleow/GOMOD/go-pardocs/raw/"}},
-		//{"test #1", args{"./data/BukanLisan/split.yml", hansard.HANSARD_WRITTEN, "", "/Users/mleow/GOMOD/go-pardocs/raw/"}},
+		//{"test #1", args{"./data/BukanLisan/split.yml", hansard.HANSARD_WRITTEN, "", "/Users/mleow/GOMOD/go-go-pardocs/raw/"}},
+		//{"test #1", args{"./data/BukanLisan/split.yml", hansard.HANSARD_WRITTEN, "", "/Users/mleow/GOMOD/go-go-pardocs/raw/"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

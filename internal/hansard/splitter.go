@@ -82,7 +82,7 @@ func (shd *SplitHansardDocument) PrepareSplit() {
 	// If no pdf, append PDF
 	// check actual type via MIME? or ext?
 	// Build out the full path ..
-	//rawBasePath := "/Users/mleow/GOMOD/go-pardocs/raw/"
+	//rawBasePath := "/Users/mleow/GOMOD/go-go-pardocs/raw/"
 	//
 	var hansardType string
 	switch shd.HansardType {
