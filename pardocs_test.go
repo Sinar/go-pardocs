@@ -1,35 +1,38 @@
-package pardocs_test
+package pardocs
 
 import (
 	"testing"
 
-	"github.com/Sinar/go-pardocs"
+	"github.com/Sinar/go-pardocs/internal/hansard"
 )
 
-func TestParliamentDocs_Plan(t *testing.T) {
+func Test_getParliamentDocMetadata(t *testing.T) {
+	type args struct {
+		pdfPath string
+		ht      hansard.HansardType
+	}
 	tests := []struct {
-		name string
-		pd   *pardocs.ParliamentDocs
+		name            string
+		args            args
+		wantSessionName string
+		wantHansardType string
 	}{
-		// TODO: Add test cases.
+		{"test #1", args{"./raw/BukanLisan/Pertanyaan Jawapan Bukan Lisan 22019_new.pdf",
+			hansard.HANSARD_WRITTEN},
+			"Pertanyaan Jawapan Bukan Lisan 22019_new", "BukanLisan"},
+		{"test #2", args{"/tmp/Parlimen_Lisan_22019.pdf",
+			hansard.HANSARD_SPOKEN}, "Parlimen_Lisan_22019",
+			"Lisan"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.pd.Plan()
-		})
-	}
-}
-
-func TestParliamentDocs_Split(t *testing.T) {
-	tests := []struct {
-		name string
-		pd   *pardocs.ParliamentDocs
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.pd.Split()
+			gotSessionName, gotHansardType := getParliamentDocMetadata(tt.args.pdfPath, tt.args.ht)
+			if gotSessionName != tt.wantSessionName {
+				t.Errorf("getParliamentDocMetadata() gotSessionName = %v, want %v", gotSessionName, tt.wantSessionName)
+			}
+			if gotHansardType != tt.wantHansardType {
+				t.Errorf("getParliamentDocMetadata() gotHansardType = %v, want %v", gotHansardType, tt.wantHansardType)
+			}
 		})
 	}
 }

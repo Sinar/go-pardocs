@@ -24,6 +24,10 @@ type PDFDocument struct {
 	sourcePath string
 }
 
+const (
+	MaxLineProcessed = 7
+)
+
 func NewPDFDoc(sourcePath string) (*PDFDocument, error) {
 	// TODO: Guard checks to ensure file exists?? etc.
 	// and is readbale??
@@ -152,8 +156,8 @@ func extractTxtSameLine(ptrTxtSameLine *[]string, pdfContentTxt []pdf.Text) erro
 			currentContent += v.S
 		}
 
-		// NOTE: Only get 10 lines ..
-		if numValidLineCounted > 10 {
+		// NOTE: Only get MaxLineProcessed lines ..
+		if numValidLineCounted > MaxLineProcessed {
 			break
 		}
 
@@ -211,8 +215,8 @@ func extractTxtSameStyles(ptrTxtSameStyles *[]string, pdfContentTxt []pdf.Text) 
 			currentContent += v.S
 		}
 
-		// NOTE: Only get 10 lines ..
-		if numValidLineCounted > 10 {
+		// NOTE: Only get MaxLineProcessed lines ..
+		if numValidLineCounted > MaxLineProcessed {
 			break
 		}
 	}
