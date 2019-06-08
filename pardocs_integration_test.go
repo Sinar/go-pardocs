@@ -12,9 +12,11 @@ func TestParliamentDocs_Plan(t *testing.T) {
 		name string
 		pd   *pardocs.ParliamentDocs
 	}{
+		// Too huge!!
 		{"test #1", &pardocs.ParliamentDocs{pardocs.Configuration{
 			"par14sesi2", hansard.HANSARD_WRITTEN,
 			".", "./raw/BukanLisan/Pertanyaan Jawapan Bukan Lisan 22019_new.pdf", pardocs.PLAN}}},
+		{},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

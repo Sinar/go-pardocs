@@ -1,7 +1,7 @@
 run: build
 	@./go-pardocs
     
-build: test
+build: 
 	@go build ./cmd/go-pardocs
 
 test:
