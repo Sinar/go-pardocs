@@ -39,10 +39,11 @@ type planCmd struct {
 func (*planCmd) Name() string     { return "plan" }
 func (*planCmd) Synopsis() string { return "Plan the Parliament Doc Splitting .." }
 func (*planCmd) Usage() string {
-	return `plan -session <name> -type <L|BL> <sourcePDFPath>
-Examplse:
+	return `plan -session <name> -type <L|BL> [-force] [-dir <workspace>] <sourcePDFPath>
+Example:
 	./go-pardocs plan -session par14sesi1 -type L ./raw/Lisan/JDR12032019.pdf
 	./go-pardocs plan -session par13sesi3 -type L ./raw/Lisan/JWP DR 161018.pdf
+	./go-pardocs plan -session par12sesi1 -type L ./raw/Lisan/20140327__DR_JawabLisan_clean.pdf
 `
 }
 func (p *planCmd) SetFlags(f *flag.FlagSet) {
@@ -127,9 +128,9 @@ func (p *planCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 type splitCmd struct{}
 
 func (*splitCmd) Name() string     { return "split" }
-func (*splitCmd) Synopsis() string { return "Splitting the plan .." }
+func (*splitCmd) Synopsis() string { return "Splitting SourcePDF based on plan .." }
 func (*splitCmd) Usage() string {
-	return `split
+	return `split [-force] [-dir <workspace>] <sourcePDFPath>
 ... :( ...
 `
 }

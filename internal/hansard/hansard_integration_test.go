@@ -61,9 +61,9 @@ func TestHansardDocument_SplitPDFByQuestions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			hd := &hansard.HansardDocument{
-				HansardType:      tt.fields.HansardType,
-				SessionName:      tt.fields.SessionName,
-				HansardQuestions: tt.fields.HansardQuestions,
+				HansardType:       tt.fields.HansardType,
+				ParliamentSession: tt.fields.SessionName,
+				HansardQuestions:  tt.fields.HansardQuestions,
 			}
 			if err := hd.SplitPDFByQuestions(); (err != nil) != tt.wantErr {
 				t.Errorf("HansardDocument.SplitPDFByQuestions() error = %v, wantErr %v", err, tt.wantErr)

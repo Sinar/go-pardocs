@@ -28,11 +28,11 @@ type HansardQuestion struct {
 }
 
 type HansardDocument struct {
-	HansardType      HansardType
-	SessionName      string // Get this from the front page cover .. or the reference lookup ..
-	HansardQuestions []HansardQuestion
-	splitterState    splitterState
-	originalPDFPath  string // Used for split later ..
+	ParliamentSession string // Get this from the front page cover .. or the reference lookup ..
+	HansardType       HansardType
+	HansardQuestions  []HansardQuestion
+	splitterState     splitterState
+	originalPDFPath   string // Used for split later ..
 }
 
 type HansardType int
@@ -60,10 +60,9 @@ type splitterState struct {
 
 func NewHansardDocument(pdfPath string) (*HansardDocument, error) {
 	hansardDoc := HansardDocument{
-		HansardType:     HANSARD_WRITTEN,
-		SessionName:     detectPossibleSessionName(pdfPath),
-		originalPDFPath: pdfPath,
-		splitterState:   splitterState{0, "", make(map[string]QuestionStatus, 0), nil, nil},
+		ParliamentSession: detectPossibleSessionName(pdfPath),
+		originalPDFPath:   pdfPath,
+		splitterState:     splitterState{0, "", make(map[string]QuestionStatus, 0), nil, nil},
 	}
 	return &hansardDoc, nil
 }
@@ -240,7 +239,8 @@ func (hd *HansardDocument) PersistForSplit(absoluteRawDataPath string) error {
 	// TODO: Restructure so that it is driven by the type? Or do we have full control?
 	rawDataFolderSetup(absoluteRawDataPath)
 	//spew.Dump(hd)
-	b, err := yaml.Marshal(hd.HansardQuestions)
+	//b, err := yaml.Marshal(hd.HansardQuestions)
+	b, err := yaml.Marshal(hd) // Put the full metadata needed for the execution ..
 	if err != nil {
 		panic(err)
 	}

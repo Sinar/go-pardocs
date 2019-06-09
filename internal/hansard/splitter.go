@@ -17,7 +17,7 @@ type SplitHansardDocument struct {
 	SessionName      string // Get this from the front page cover .. or the reference lookup ..
 	WorkingDirectory string // defaults to cwd if not defined ..
 	OriginalPDFPath  string // Used for split later ..
-	DestSplitPDFs    string // Directory to store the final split items; default to ./data/<HansardType>/<SessionName>/
+	DestSplitPDFs    string // Directory to store the final split items; default to ./data/<HansardType>/<ParliamentSession>/
 	SplitPlans       []SplitPlan
 }
 

@@ -80,6 +80,9 @@ func (pd *ParliamentDocs) Plan() {
 	}
 	// Wrap up processing; what if there is no pages?
 	hansardDoc.Finalize()
+	// TODO: Better refactoring somewhere else? looks like a bit of a hack ..
+	hansardDoc.ParliamentSession = pd.Conf.ParliamentSession // Mis-naming? is this the right place to place this?
+	hansardDoc.HansardType = pd.Conf.HansardType
 	// Persist the  plan
 	sessionName, hansardType := getParliamentDocMetadata(pdfPath, pd.Conf.HansardType)
 	hansardDoc.PersistForSplit(fmt.Sprintf("./data/%s/%s", hansardType, sessionName))
