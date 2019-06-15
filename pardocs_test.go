@@ -2,37 +2,64 @@ package pardocs
 
 import (
 	"testing"
-
-	"github.com/Sinar/go-pardocs/internal/hansard"
 )
 
-func Test_getParliamentDocMetadata(t *testing.T) {
-	type args struct {
-		pdfPath string
-		ht      hansard.HansardType
+func TestParliamentDocs_Plan(t *testing.T) {
+	type fields struct {
+		Conf Configuration
 	}
 	tests := []struct {
-		name            string
-		args            args
-		wantSessionName string
-		wantHansardType string
+		name   string
+		fields fields
 	}{
-		{"test #1", args{"./raw/BukanLisan/Pertanyaan Jawapan Bukan Lisan 22019_new.pdf",
-			hansard.HANSARD_WRITTEN},
-			"Pertanyaan Jawapan Bukan Lisan 22019_new", "BukanLisan"},
-		{"test #2", args{"/tmp/Parlimen_Lisan_22019.pdf",
-			hansard.HANSARD_SPOKEN}, "Parlimen_Lisan_22019",
-			"Lisan"},
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSessionName, gotHansardType := getParliamentDocMetadata(tt.args.pdfPath, tt.args.ht)
-			if gotSessionName != tt.wantSessionName {
-				t.Errorf("getParliamentDocMetadata() gotSessionName = %v, want %v", gotSessionName, tt.wantSessionName)
+			pd := &ParliamentDocs{
+				Conf: tt.fields.Conf,
 			}
-			if gotHansardType != tt.wantHansardType {
-				t.Errorf("getParliamentDocMetadata() gotHansardType = %v, want %v", gotHansardType, tt.wantHansardType)
+			pd.Plan()
+		})
+	}
+}
+
+func TestParliamentDocs_Split(t *testing.T) {
+	type fields struct {
+		Conf Configuration
+	}
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pd := &ParliamentDocs{
+				Conf: tt.fields.Conf,
 			}
+			pd.Split()
+		})
+	}
+}
+
+func TestParliamentDocs_Reset(t *testing.T) {
+	type fields struct {
+		Conf Configuration
+	}
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pd := &ParliamentDocs{
+				Conf: tt.fields.Conf,
+			}
+			pd.Reset()
 		})
 	}
 }

@@ -1,9 +1,6 @@
 package pardocs // import "github.com/Sinar/go-pardocs"
 import (
-	"fmt"
 	"log"
-	"path/filepath"
-	"strings"
 
 	"github.com/Sinar/go-pardocs/internal/hansard"
 )
@@ -41,21 +38,6 @@ type Configuration struct {
 	Cmd CommandMode
 }
 
-func getParliamentDocMetadata(pdfPath string, ht hansard.HansardType) (sessionName string, hansardType string) {
-	baseFilename := filepath.Base(pdfPath)
-	sessionName = strings.Split(baseFilename, ".")[0]
-	switch ht {
-	case hansard.HANSARD_SPOKEN:
-		hansardType = "Lisan"
-	case hansard.HANSARD_WRITTEN:
-		hansardType = "BukanLisan"
-	default:
-		panic(fmt.Errorf("INVALUED TYPE!!!"))
-	}
-
-	return sessionName, hansardType
-}
-
 func (pd *ParliamentDocs) Plan() {
 	log.Println("In Plan ..")
 	pdfPath := pd.Conf.SourcePDFPath
@@ -84,12 +66,26 @@ func (pd *ParliamentDocs) Plan() {
 	hansardDoc.ParliamentSession = pd.Conf.ParliamentSession // Mis-naming? is this the right place to place this?
 	hansardDoc.HansardType = pd.Conf.HansardType
 	// Persist the  plan
-	sessionName, hansardType := getParliamentDocMetadata(pdfPath, pd.Conf.HansardType)
-	hansardDoc.PersistForSplit(fmt.Sprintf("%s/data/%s/%s", pd.Conf.WorkingDir, hansardType, sessionName))
+	hansard.SavePlan(pd.Conf.HansardType, pd.Conf.WorkingDir, pd.Conf.SourcePDFPath, hansardDoc)
+	//sessionName, hansardType := getParliamentDocMetadata(pdfPath, pd.Conf.HansardType)
+	//hansardDoc.PersistForSplit(fmt.Sprintf("%s/data/%s/%s", pd.Conf.WorkingDir, hansardType, sessionName))
 }
 
 func (pd *ParliamentDocs) Split() {
 	log.Println("In Split ..")
+	// Load plan
+	//sessionName, hansardType := getParliamentDocMetadata(pd.Conf.SourcePDFPath, pd.Conf.HansardType)
+	//planLocation := fmt.Sprintf("%s/data/%s/%s/split.yml", pd.Conf.WorkingDir, hansardType, sessionName)
+	plan := hansard.LoadSplitHansardDocPlanFromFile(pd.Conf.HansardType, pd.Conf.WorkingDir, pd.Conf.SourcePDFPath)
+
+	// Get the struct
+	shdp := hansard.NewSplitHansardDocumentPlan(pd.Conf.HansardType, pd.Conf.WorkingDir, pd.Conf.SourcePDFPath)
+
+	// Execute!
+	for _, hq := range plan.HansardQuestions {
+		shdp.ExecuteSplit(pd.Conf.ParliamentSession, hq)
+	}
+
 }
 
 func (pd *ParliamentDocs) Reset() {
