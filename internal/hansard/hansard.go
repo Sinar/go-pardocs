@@ -235,8 +235,8 @@ func Split(t string, c string) []string {
 }
 
 func (hd *HansardDocument) PersistForSplit(absoluteRawDataPath string) error {
-
-	// TODO: Restructure so that it is driven by the type? Or do we have full control?
+	// DEBUG
+	//fmt.Println("Persist to: ", absoluteRawDataPath)
 	rawDataFolderSetup(absoluteRawDataPath)
 	//spew.Dump(hd)
 	//b, err := yaml.Marshal(hd.HansardQuestions)

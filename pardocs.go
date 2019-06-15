@@ -85,7 +85,7 @@ func (pd *ParliamentDocs) Plan() {
 	hansardDoc.HansardType = pd.Conf.HansardType
 	// Persist the  plan
 	sessionName, hansardType := getParliamentDocMetadata(pdfPath, pd.Conf.HansardType)
-	hansardDoc.PersistForSplit(fmt.Sprintf("./data/%s/%s", hansardType, sessionName))
+	hansardDoc.PersistForSplit(fmt.Sprintf("%s/data/%s/%s", pd.Conf.WorkingDir, hansardType, sessionName))
 }
 
 func (pd *ParliamentDocs) Split() {

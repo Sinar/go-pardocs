@@ -27,6 +27,22 @@ type SplitPlan struct {
 	PageNumEnd   int
 }
 
+func LoadSplitHansardDocPlan(splitPlan string) *HansardDocument {
+	splitHansardDocPlan := HansardDocument{}
+
+	// Read the plan file
+	b, rerr := ioutil.ReadFile(splitPlan)
+	if rerr != nil {
+		panic(rerr)
+	}
+	umerr := yaml.Unmarshal(b, &splitHansardDocPlan)
+	if umerr != nil {
+		panic(umerr)
+	}
+
+	return &splitHansardDocPlan
+}
+
 // NewSplitPlan will use a Reader (better!) to extract out the plan
 func NewSplitHansardDocument(label string, currentWorkingDir string, planFilename string, hansardType HansardType, sessionName string, originalPDFPath string) *SplitHansardDocument {
 	splitHansardDocument := SplitHansardDocument{
