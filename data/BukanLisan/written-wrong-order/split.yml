@@ -1,0 +1,18 @@
+parliamentsession: par14sesi2
+hansardtype: 1
+hansardquestions:
+- questionnum: "474"
+  pagenumstart: 1
+  pagenumend: 2
+- questionnum: "473"
+  pagenumstart: 3
+  pagenumend: 4
+- questionnum: "476"
+  pagenumstart: 5
+  pagenumend: 5
+- questionnum: "477"
+  pagenumstart: 6
+  pagenumend: 7
+- questionnum: "478"
+  pagenumstart: 8
+  pagenumend: 10

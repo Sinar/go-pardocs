@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/Sinar/go-pardocs/internal/hansard"
 
-	"github.com/Sinar/go-pardocs"
+	pardocs "github.com/Sinar/go-pardocs"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/google/subcommands"
 )
 
@@ -39,17 +39,18 @@ type planCmd struct {
 func (*planCmd) Name() string     { return "plan" }
 func (*planCmd) Synopsis() string { return "Plan the Parliament Doc Splitting .." }
 func (*planCmd) Usage() string {
-	return `plan -session <name> -type <L|BL> [-force] [-dir <workspace>] <sourcePDFPath>
+	return `./go-pardocs plan -session <name> -type <L|BL> [-force] [-dir <workspace>] <sourcePDFPath>
 Example:
 	./go-pardocs plan -session par14sesi1 -type L ./raw/Lisan/JDR12032019.pdf
 	./go-pardocs plan -session par13sesi3 -type L ./raw/Lisan/JWP DR 161018.pdf
 	./go-pardocs plan -session par12sesi1 -type L ./raw/Lisan/20140327__DR_JawabLisan_clean.pdf
+	./go-pardocs plan -session par14sesi2 -type BL ./testdata/sad1/written-wrong-order.pdf
 `
 }
 func (p *planCmd) SetFlags(f *flag.FlagSet) {
 	f.StringVar(&p.sessionLabel, "session", "", "Parliament Session Name e.g par14sesi1")
 	f.StringVar(&p.hansardType, "type", "", "HansardType: [L|BL] for Lisan/BukanLisan")
-	//f.StringVar(&p.workingDir, "dir", ".", "Where raw + data stored; e.g. /tmp")
+	f.StringVar(&p.workingDir, "dir", ".", "Where raw + data stored; e.g. /tmp")
 }
 func (p *planCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	log.Println("In plan Execute ..")
@@ -107,10 +108,12 @@ func (p *planCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 	}
 
 	sourcePDFPath := f.Args()[0]
-	log.Println("SourcePDFPath: ", sourcePDFPath)
-
-	conf := pardocs.Configuration{sessionLabel, hansardType, p.workingDir,
-		sourcePDFPath, pardocs.PLAN}
+	absSourcePDFPath, _ := filepath.Abs(sourcePDFPath)
+	log.Println("AbsoluteSourcePDFPath: ", absSourcePDFPath)
+	absWorkingDir, _ := filepath.Abs(p.workingDir)
+	log.Println("AbsoluteWorkingDir: ", absWorkingDir)
+	conf := pardocs.Configuration{sessionLabel, hansardType,
+		absWorkingDir, absSourcePDFPath, pardocs.PLAN}
 	// DEBUG
 	//spew.Dump(conf)
 	// Detect the cover page and suggest label names?
@@ -120,6 +123,7 @@ func (p *planCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 	parDoc.Plan()
 	// Print out the location of the plan to be reviewed?
 	// Suggest any changes; automatic anomaly checks? strange odds rule; not in order?
+	// TODO: Handle errors?
 
 	return subcommands.ExitSuccess
 }
@@ -134,22 +138,24 @@ type splitCmd struct {
 func (*splitCmd) Name() string     { return "split" }
 func (*splitCmd) Synopsis() string { return "Splitting SourcePDF based on plan .." }
 func (*splitCmd) Usage() string {
-	return `split [-force] [-dir <workspace>] <sourcePDFPath>
-... :( ...
+	return `./go-pardocs split [-force] [-dir <workspace>] <sourcePDFPath>
+Example:
+	./go-pardocs split -session par14sesi1 -type L ./raw/Lisan/JDR12032019.pdf
+	./go-pardocs split -session par13sesi3 -type L ./raw/Lisan/JWP DR 161018.pdf
+	./go-pardocs split -session par12sesi1 -type L ./raw/Lisan/20140327__DR_JawabLisan_clean.pdf
+	./go-pardocs split -session par14sesi2 -type BL ./testdata/sad1/written-wrong-order.pdf
 `
 }
 func (p *splitCmd) SetFlags(f *flag.FlagSet) {
-	//f.BoolVar(&p.capitalize, "capitalize", false, "capitalize output")
+	f.StringVar(&p.sessionLabel, "session", "", "Parliament Session Name e.g par14sesi1")
+	f.StringVar(&p.hansardType, "type", "", "HansardType: [L|BL] for Lisan/BukanLisan")
+	f.StringVar(&p.workingDir, "dir", ".", "Where raw + data stored; e.g. /tmp")
 }
 func (p *splitCmd) Execute(_ context.Context, f *flag.FlagSet, args ...interface{}) subcommands.ExitStatus {
-
-	// Check pre-reqs that the plan exists; otherwise suggest to run plan?
-	// or maybe even automatically run it ?
-
 	// Setup the configuration ..
-
 	// Slices of the args for the flag ..
-	spew.Println(f.Args())
+	// DEBUG
+	//spew.Println(f.Args())
 
 	// TODO: Refactor? so checks all;  or should it be fast exit?
 	if p.sessionLabel == "" {
@@ -165,16 +171,6 @@ func (p *splitCmd) Execute(_ context.Context, f *flag.FlagSet, args ...interface
 		fmt.Println(p.Usage())
 		return subcommands.ExitUsageError
 	}
-	//for _, unsetFlag := range UnsetFlags(f) {
-	//	fmt.Println("UNSET: ", unsetFlag.Name)
-	//}
-
-	// Check if the values are correct or not
-	//if p.hansardType != "L" && p.hansardType != "BL" {
-	//	fmt.Println("VALID HANSARDTYPE: L or BL")
-	//	fmt.Println(p.Usage())
-	//	return subcommands.ExitUsageError
-	//}
 
 	var hansardType hansard.HansardType
 	switch p.hansardType {
@@ -203,16 +199,21 @@ func (p *splitCmd) Execute(_ context.Context, f *flag.FlagSet, args ...interface
 	}
 
 	sourcePDFPath := f.Args()[0]
-	log.Println("SourcePDFPath: ", sourcePDFPath)
-
-	conf := pardocs.Configuration{sessionLabel, hansardType, p.workingDir,
-		sourcePDFPath, pardocs.PLAN}
+	absSourcePDFPath, _ := filepath.Abs(sourcePDFPath)
+	log.Println("AbsoluteSourcePDFPath: ", absSourcePDFPath)
+	absWorkingDir, _ := filepath.Abs(p.workingDir)
+	log.Println("AbsoluteWorkingDir: ", absWorkingDir)
+	conf := pardocs.Configuration{sessionLabel, hansardType,
+		absWorkingDir, absSourcePDFPath, pardocs.SPLIT}
 	// DEBUG
-	spew.Dump(conf)
+	//spew.Dump(conf)
 
-	// Nothign here ..
-	//spew.Dump(args)
-	return subcommands.ExitFailure
+	parDoc := pardocs.ParliamentDocs{conf}
+	// Execute the plan .. should catch errors  with xerrors :P
+	parDoc.Split()
+	// TODO: Handle errors?
+
+	return subcommands.ExitSuccess
 }
 
 // Helper functions; is it really needed?

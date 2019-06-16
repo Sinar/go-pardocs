@@ -11,7 +11,11 @@ Assumes:
 
 ### Planning
 ```bash
-$ ./go-pardocs plan
+$ ./go-pardocs plan -session <name> -type <L|BL> [-force] [-dir <workspace>] <sourcePDFPath>
+Example:
+	./go-pardocs plan -session par14sesi1 -type L ./raw/Lisan/JDR12032019.pdf
+	./go-pardocs plan -session par13sesi3 -type L ./raw/Lisan/JWP DR 161018.pdf
+	./go-pardocs plan -session par12sesi1 -type L ./raw/Lisan/20140327__DR_JawabLisan_clean.pdf
 
 ```
 
