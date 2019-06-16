@@ -125,7 +125,11 @@ func (p *planCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 }
 
 // =============== SPLIT command =================
-type splitCmd struct{}
+type splitCmd struct {
+	sessionLabel string
+	hansardType  string
+	workingDir   string
+}
 
 func (*splitCmd) Name() string     { return "split" }
 func (*splitCmd) Synopsis() string { return "Splitting SourcePDF based on plan .." }
@@ -146,6 +150,65 @@ func (p *splitCmd) Execute(_ context.Context, f *flag.FlagSet, args ...interface
 
 	// Slices of the args for the flag ..
 	spew.Println(f.Args())
+
+	// TODO: Refactor? so checks all;  or should it be fast exit?
+	if p.sessionLabel == "" {
+		// default means it is NOT set correctly!
+		fmt.Println("session REQUIRED!!")
+		fmt.Println(p.Usage())
+		return subcommands.ExitUsageError
+	}
+	sessionLabel := p.sessionLabel
+	// For string, not needed; we can check the default values ..
+	if !isFlagPassed(f, "type") {
+		fmt.Println("type REQUIRED!!")
+		fmt.Println(p.Usage())
+		return subcommands.ExitUsageError
+	}
+	//for _, unsetFlag := range UnsetFlags(f) {
+	//	fmt.Println("UNSET: ", unsetFlag.Name)
+	//}
+
+	// Check if the values are correct or not
+	//if p.hansardType != "L" && p.hansardType != "BL" {
+	//	fmt.Println("VALID HANSARDTYPE: L or BL")
+	//	fmt.Println(p.Usage())
+	//	return subcommands.ExitUsageError
+	//}
+
+	var hansardType hansard.HansardType
+	switch p.hansardType {
+	case "L":
+		hansardType = hansard.HANSARD_SPOKEN
+	case "BL":
+		hansardType = hansard.HANSARD_WRITTEN
+	default:
+		fmt.Println("VALID HANSARDTYPE: L or BL")
+		fmt.Println(p.Usage())
+		return subcommands.ExitUsageError
+	}
+
+	if f.NArg() == 0 {
+		// shoudl validate if real existing file?
+		fmt.Println("Need VALID SourcePDFPath!!!")
+		fmt.Println(p.Usage())
+		return subcommands.ExitUsageError
+	}
+
+	if f.NArg() > 1 {
+		// shoudl validate if real existing file?
+		fmt.Println("Too many Args!!!!")
+		fmt.Println(p.Usage())
+		return subcommands.ExitUsageError
+	}
+
+	sourcePDFPath := f.Args()[0]
+	log.Println("SourcePDFPath: ", sourcePDFPath)
+
+	conf := pardocs.Configuration{sessionLabel, hansardType, p.workingDir,
+		sourcePDFPath, pardocs.PLAN}
+	// DEBUG
+	spew.Dump(conf)
 
 	// Nothign here ..
 	//spew.Dump(args)

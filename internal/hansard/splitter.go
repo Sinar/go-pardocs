@@ -3,31 +3,17 @@ package hansard
 import (
 	"fmt"
 	"io/ioutil"
+	"os/exec"
+	"os/user"
 	"path/filepath"
 	"strings"
 
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	papi "github.com/hhrutter/pdfcpu/pkg/api"
 	"github.com/hhrutter/pdfcpu/pkg/pdfcpu"
 	"github.com/y0ssar1an/q"
 )
-
-type SplitHansardDocument struct {
-	Label            string
-	HansardType      HansardType
-	SessionName      string // Get this from the front page cover .. or the reference lookup ..
-	WorkingDirectory string // defaults to cwd if not defined ..
-	OriginalPDFPath  string // Used for split later ..
-	DestSplitPDFs    string // Directory to store the final split items; default to ./data/<HansardType>/<ParliamentSession>/
-	SplitPlans       []SplitPlan
-}
-
-type SplitPlan struct {
-	QuestionNum  string
-	PageNumStart int
-	PageNumEnd   int
-}
 
 type SplitHansardDocumentPlan struct {
 	sessionName   string
@@ -48,10 +34,11 @@ func NewSplitHansardDocumentPlan(confHansardType HansardType, workingDir string,
 	return &splitHansardDocPlan
 }
 
-func LoadSplitHansardDocPlanFromFile(confHansardType HansardType, workingDir string, sourcePDFPath string) *HansardDocument {
+func SavePlan(confHansardType HansardType, workingDir string, sourcePDFPath string, hansardDoc *HansardDocument) {
+
 	sessionName, hansardType := getParliamentDocMetadata(sourcePDFPath, confHansardType)
-	splitPlanPath := fmt.Sprintf("%s/data/%s/%s/split.yml", workingDir, hansardType, sessionName)
-	return loadSplitHansardDocPlan(splitPlanPath)
+	hansardDoc.PersistForSplit(fmt.Sprintf("%s/data/%s/%s", workingDir, hansardType, sessionName))
+
 }
 
 func loadSplitHansardDocPlan(splitPlanPath string) *HansardDocument {
@@ -70,107 +57,10 @@ func loadSplitHansardDocPlan(splitPlanPath string) *HansardDocument {
 	return &splitHansardDocPlan
 }
 
-// NewSplitPlan will use a Reader (better!) to extract out the plan
-func NewSplitHansardDocument(label string, currentWorkingDir string, planFilename string, hansardType HansardType, sessionName string, originalPDFPath string) *SplitHansardDocument {
-	splitHansardDocument := SplitHansardDocument{
-		Label:            label,
-		HansardType:      hansardType,
-		SessionName:      sessionName,
-		WorkingDirectory: currentWorkingDir,
-		OriginalPDFPath:  originalPDFPath,
-	}
-	// Use mock for simpler cases ..
-	splitHansardDocument.SplitPlans = NewMockSplitPlan()
-
-	// Read the plan file
-	b, rerr := ioutil.ReadFile(fmt.Sprintf("%s/%s", currentWorkingDir, planFilename))
-	if rerr != nil {
-		panic(rerr)
-	}
-	umerr := yaml.Unmarshal(b, &splitHansardDocument.SplitPlans)
-	if umerr != nil {
-		panic(umerr)
-	}
-	return &splitHansardDocument
-}
-
-func getParliamentDocMetadata(pdfPath string, ht HansardType) (sessionName string, hansardType string) {
-	baseFilename := filepath.Base(pdfPath)
-	sessionName = strings.Split(baseFilename, ".")[0]
-	switch ht {
-	case HANSARD_SPOKEN:
-		hansardType = "Lisan"
-	case HANSARD_WRITTEN:
-		hansardType = "BukanLisan"
-	default:
-		panic(fmt.Errorf("INVALID TYPE!!!"))
-	}
-
-	return sessionName, hansardType
-}
-
-func SavePlan(confHansardType HansardType, workingDir string, sourcePDFPath string, hansardDoc *HansardDocument) {
-
+func LoadSplitHansardDocPlanFromFile(confHansardType HansardType, workingDir string, sourcePDFPath string) *HansardDocument {
 	sessionName, hansardType := getParliamentDocMetadata(sourcePDFPath, confHansardType)
-	hansardDoc.PersistForSplit(fmt.Sprintf("%s/data/%s/%s", workingDir, hansardType, sessionName))
-
-}
-
-func (shd *SplitHansardDocument) PrepareExecuteSplit() {
-	// If the split document does not exist; call the Prepare
-	var hansardType string
-	switch shd.HansardType {
-	case HANSARD_WRITTEN:
-		hansardType = "BukanLisan"
-
-	case HANSARD_SPOKEN:
-		hansardType = "Lisan"
-
-	default:
-		panic(fmt.Errorf("Incorrect TYPE: %#v", shd.HansardType))
-	}
-
-	proceedPrepare := rawDataFolderSetup(fmt.Sprintf("%s/raw/splitout/%s/%s/pages/", shd.WorkingDirectory, hansardType, shd.SessionName))
-	if proceedPrepare {
-		fmt.Println("OK; splitting!!")
-		shd.PrepareSplit()
-	}
-
-	for _, sp := range shd.SplitPlans {
-		sp.ExecuteSplit(shd.WorkingDirectory, hansardType, shd.SessionName, shd.Label)
-	}
-}
-
-// TODO: Refactor to local and group it out ..
-func (shd *SplitHansardDocument) PrepareSplit() {
-	fmt.Println("In shd.PrepareSplit ..")
-	// If no pdf, append PDF
-	// check actual type via MIME? or ext?
-	// Build out the full path ..
-	//rawBasePath := "/Users/mleow/GOMOD/go-go-pardocs/raw/"
-	//
-	var hansardType string
-	switch shd.HansardType {
-	case HANSARD_WRITTEN:
-		hansardType = "BukanLisan"
-
-	case HANSARD_SPOKEN:
-		hansardType = "Lisan"
-
-	default:
-		panic(fmt.Errorf("Incorrect TYPE: %#v", shd.HansardType))
-	}
-	// Assumes created ?
-	cmd := papi.SplitCommand(fmt.Sprintf("%s/%s", shd.WorkingDirectory, shd.OriginalPDFPath),
-		fmt.Sprintf("%s/raw/splitout/%s/%s/pages/", shd.WorkingDirectory, hansardType, shd.SessionName),
-		1, pdfcpu.NewDefaultConfiguration())
-	o, perr := papi.Process(cmd)
-	if perr != nil {
-		panic(perr)
-	}
-	// What is the output??
-	// DEBUG
-	q.Q(o)
+	splitPlanPath := fmt.Sprintf("%s/data/%s/%s/split.yml", workingDir, hansardType, sessionName)
+	return loadSplitHansardDocPlan(splitPlanPath)
 }
 
 func extractCoverPage(hansardType HansardType, originalPDFPath string) []string {
@@ -191,60 +81,54 @@ func detectSessionName(hansardType HansardType, sourcePDFFileName string, conten
 	return sourcePDFFileName
 }
 
-// NewMockSplitPlan returns
-// 	portion of actual test case file PDF
-func NewMockSplitPlan() []SplitPlan {
-	return []SplitPlan{
-		{"1", 2, 3},
-		{"2", 4, 4},
-		{"3", 5, 6},
-		{"4", 7, 8},
-		{"5", 9, 9},
-		{"6", 10, 12},
-	}
-}
+//func (hsdp *SplitHansardDocumentPlan) Setup() {
+//
+//	// Prepare final location
+//	proceedPrepare := rawDataFolderSetup(fmt.Sprintf("%s/raw/splitout/%s/%s/pages/", hsdp.workingDir, hsdp.hansardType, hsdp.sessionName))
+//	if proceedPrepare {
+//		fmt.Println("OK; splitting!!")
+//		prepareSplit(hsdp.sessionName, hsdp.hansardType, hsdp.workingDir, hsdp.sourcePDFPath)
+//	}
+//
+//}
 
-func (sp *SplitPlan) ExecuteSplit(currentWorkingDir string, hansardType string, sessionName string, label string) {
-	// TODO: Guardrail; check first that Prepare split is already there; full doc split out
-	// into /tmp/split/<file_basename>/<file_basename>_<pagenum>/pdf
-
-	var pagesToMerge []string
-
-	for i := sp.PageNumStart; i <= sp.PageNumEnd; i++ {
-		sourcePDFPath := fmt.Sprintf("%s/raw/splitout/%s/%s/pages/%s_%d.pdf", currentWorkingDir, hansardType, sessionName, sessionName, i)
-		pagesToMerge = append(pagesToMerge, sourcePDFPath)
-	}
-	// DEBUG
-	//q.Q(pagesToMerge)
-
-	finalMergedPDFPath := fmt.Sprintf("%s/splitout/%s-soalan-%s-%s.pdf", currentWorkingDir, label, hansardType, sp.QuestionNum)
-	fmt.Println(">>>=========== Merged file at: ", finalMergedPDFPath, " ==============<<<<<<")
-	cmd := papi.MergeCommand(pagesToMerge, finalMergedPDFPath, pdfcpu.NewDefaultConfiguration())
-	o, merr := papi.Process(cmd)
-	if merr != nil {
-		panic(merr)
-	}
-	// DEBUG
-	q.Q(o)
-
-}
-
-func (hsdp *SplitHansardDocumentPlan) Setup() {
-
-	// Prepare final location
-	proceedPrepare := rawDataFolderSetup(fmt.Sprintf("%s/raw/splitout/%s/%s/pages/", hsdp.workingDir, hsdp.hansardType, hsdp.sessionName))
-	if proceedPrepare {
-		fmt.Println("OK; splitting!!")
-		prepareSplit(hsdp.sessionName, hsdp.hansardType, hsdp.workingDir, hsdp.sourcePDFPath)
-	}
-
-}
-
+// Use the CLI method which is tested to work ..
 func prepareSplit(sessionName string, hansardType string, workingDir string, sourcePDFPath string) {
+	// pdfcpu split <sourcePDF> <destDir>
+	// e.g.
+	// $ pdfcpu split ./raw/Lisan/JDR12032019.pdf /var/folders/_p/qk0rf40514b4sgy16r5qyxs40000gn/T/pardocs819115744/raw/splitout/Lisan/JDR12032019/pages
 
-	cmd := papi.SplitCommand(sourcePDFPath,
-		fmt.Sprintf("%s/raw/splitout/%s/%s/pages/", workingDir, hansardType, sessionName),
-		1, pdfcpu.NewDefaultConfiguration())
+	// Assumes  user has pdfcpu  in the normal go bin dir ..
+	u, uerr := user.Current()
+	if uerr != nil {
+		panic(uerr)
+	}
+	cmdPath := fmt.Sprintf("%s/go/bin/pdfcpu", u.HomeDir)
+	destPDFDir := fmt.Sprintf("%s/raw/splitout/%s/%s/pages/", workingDir, hansardType, sessionName)
+
+	cmd := exec.Command(cmdPath, "split", sourcePDFPath, destPDFDir)
+	// DEBUG
+	//spew.Dump(cmd)
+	o, exerr := cmd.CombinedOutput()
+	if exerr != nil {
+		panic(exerr)
+	}
+	//  DEBUG ..
+	q.Q(string(o))
+}
+
+//  Cannot use via API  until https://github.com/hhrutter/pdfcpu/issues/87 resolved
+func prepareSplitAPI(sessionName string, hansardType string, workingDir string, sourcePDFPath string) {
+
+	// Relax validation  --> https://github.com/hhrutter/pdfcpu/issues/80
+	conf := pdfcpu.NewDefaultConfiguration()
+	// Not needed as it is actually relaxed by default :(
+	conf.ValidationMode = pdfcpu.ValidationRelaxed
+	//  DEBUG
+	//	fmt.Println("VALIDATION: ", conf.ValidationModeString())
+	destPDFDir := fmt.Sprintf("%s/raw/splitout/%s/%s/pages/", workingDir, hansardType, sessionName)
+	cmd := papi.SplitCommand(sourcePDFPath, destPDFDir,
+		1, conf)
 	o, perr := papi.Process(cmd)
 	if perr != nil {
 		panic(perr)
@@ -254,13 +138,21 @@ func prepareSplit(sessionName string, hansardType string, workingDir string, sou
 }
 
 func (shdp *SplitHansardDocumentPlan) ExecuteSplit(label string, hq HansardQuestion) {
+	// TODO: Guardrail; check first that Prepare split is already there; full doc split out
+	// into /tmp/split/<file_basename>/<file_basename>_<pagenum>/pdf
+	// Setup local variables; need sto  be  better?
 	currentWorkingDir := shdp.workingDir
 	hansardType := shdp.hansardType
 	sessionName := shdp.sessionName
+	// Prepare final location
+	proceedPrepare := rawDataFolderSetup(fmt.Sprintf("%s/raw/splitout/%s/%s/pages/", currentWorkingDir,
+		hansardType, sessionName))
+	if proceedPrepare {
+		fmt.Println("OK; splitting!!")
+		prepareSplit(sessionName, hansardType, currentWorkingDir, shdp.sourcePDFPath)
+	}
 
-	// TODO: Guardrail; check first that Prepare split is already there; full doc split out
-	// into /tmp/split/<file_basename>/<file_basename>_<pagenum>/pdf
-
+	// Pre-reqs are done; now can start the split itself ..
 	var pagesToMerge []string
 
 	for i := hq.PageNumStart; i <= hq.PageNumEnd; i++ {
@@ -270,9 +162,17 @@ func (shdp *SplitHansardDocumentPlan) ExecuteSplit(label string, hq HansardQuest
 	// DEBUG
 	//q.Q(pagesToMerge)
 
+	// Ensure the merged directory is there ..
+	rawDataFolderSetup(fmt.Sprintf("%s/splitout", currentWorkingDir))
 	finalMergedPDFPath := fmt.Sprintf("%s/splitout/%s-soalan-%s-%s.pdf", currentWorkingDir, label, hansardType, hq.QuestionNum)
 	fmt.Println(">>>=========== Merged file at: ", finalMergedPDFPath, " ==============<<<<<<")
-	cmd := papi.MergeCommand(pagesToMerge, finalMergedPDFPath, pdfcpu.NewDefaultConfiguration())
+
+	// Relax validation  --> https://github.com/hhrutter/pdfcpu/issues/80
+	// Real-life data are pretty broken ..
+	conf := pdfcpu.NewDefaultConfiguration()
+	// Not needed
+	//conf.ValidationMode = pdfcpu.ValidationRelaxed
+	cmd := papi.MergeCommand(pagesToMerge, finalMergedPDFPath, conf)
 	o, merr := papi.Process(cmd)
 	if merr != nil {
 		panic(merr)
@@ -280,4 +180,41 @@ func (shdp *SplitHansardDocumentPlan) ExecuteSplit(label string, hq HansardQuest
 	// DEBUG
 	q.Q(o)
 
+}
+
+// Helper Functions for Split Testing
+func SetupSplitPlanFixture(testDir string, fixtureDir string, scenarioDir string, sourcePDFPath string, ht HansardType) error {
+	// Read the fixture data
+	b, rerr := ioutil.ReadFile(fmt.Sprintf("%s/%s/split.yml", fixtureDir, scenarioDir))
+	if rerr != nil {
+		return rerr
+	}
+	// Copy fixcture data over to testDir
+	sessionName, hansardType := getParliamentDocMetadata(sourcePDFPath, ht)
+	splitPlanPath := fmt.Sprintf("%s/data/%s/%s", testDir, hansardType, sessionName)
+
+	// Create dir that does not exist
+	rawDataFolderSetup(splitPlanPath)
+	werr := ioutil.WriteFile(splitPlanPath+"/split.yml", b, 0644)
+	if werr != nil {
+		return werr
+	}
+
+	return nil
+}
+
+// Helper function
+func getParliamentDocMetadata(pdfPath string, ht HansardType) (sessionName string, hansardType string) {
+	baseFilename := filepath.Base(pdfPath)
+	sessionName = strings.Split(baseFilename, ".")[0]
+	switch ht {
+	case HANSARD_SPOKEN:
+		hansardType = "Lisan"
+	case HANSARD_WRITTEN:
+		hansardType = "BukanLisan"
+	default:
+		panic(fmt.Errorf("INVALID TYPE!!!"))
+	}
+
+	return sessionName, hansardType
 }
