@@ -3,6 +3,7 @@ package hansard
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os/exec"
 	"os/user"
 	"path/filepath"
@@ -118,12 +119,12 @@ func prepareSplit(sessionName string, hansardType string, workingDir string, sou
 }
 
 //  Cannot use via API  until https://github.com/hhrutter/pdfcpu/issues/87 resolved
-func prepareSplitAPI(sessionName string, hansardType string, workingDir string, sourcePDFPath string) {
+func prepareSplitAPI(sessionName string, hansardType string, workingDir string, sourcePDFPath string) error {
 
 	// Relax validation  --> https://github.com/hhrutter/pdfcpu/issues/80
 	conf := pdfcpu.NewDefaultConfiguration()
 	// Not needed as it is actually relaxed by default :(
-	conf.ValidationMode = pdfcpu.ValidationRelaxed
+	//conf.ValidationMode = pdfcpu.ValidationRelaxed
 	//  DEBUG
 	//	fmt.Println("VALIDATION: ", conf.ValidationModeString())
 	destPDFDir := fmt.Sprintf("%s/raw/splitout/%s/%s/pages/", workingDir, hansardType, sessionName)
@@ -131,10 +132,12 @@ func prepareSplitAPI(sessionName string, hansardType string, workingDir string, 
 		1, conf)
 	o, perr := papi.Process(cmd)
 	if perr != nil {
-		panic(perr)
+		return perr
 	}
 	// DEBUG
 	q.Q(o)
+
+	return nil
 }
 
 func (shdp *SplitHansardDocumentPlan) ExecuteSplit(label string, hq HansardQuestion) {
@@ -149,7 +152,13 @@ func (shdp *SplitHansardDocumentPlan) ExecuteSplit(label string, hq HansardQuest
 		hansardType, sessionName))
 	if proceedPrepare {
 		fmt.Println("OK; splitting!!")
-		prepareSplit(sessionName, hansardType, currentWorkingDir, shdp.sourcePDFPath)
+		pserr := prepareSplitAPI(sessionName, hansardType, currentWorkingDir, shdp.sourcePDFPath)
+		if pserr != nil {
+
+			log.Println("Unexpected error split via API: ", pserr)
+			log.Println("Falling back to split using pdfcpu CLI ..")
+			prepareSplit(sessionName, hansardType, currentWorkingDir, shdp.sourcePDFPath)
+		}
 	}
 
 	// Pre-reqs are done; now can start the split itself ..
