@@ -38,7 +38,7 @@ func NewPDFDoc(sourcePath string) (*PDFDocument, error) {
 
 	exerr := pdfDoc.extractPDF()
 	if exerr != nil {
-		panic(exerr)
+		return nil, exerr
 	}
 	return &pdfDoc, nil
 
