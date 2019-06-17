@@ -18,6 +18,6 @@ release: $(PLATFORMS)
 
 $(PLATFORMS):
 	@mkdir -p dist/$(os)-$(arch)
-	@GOOS=$(os) GOARCH=$(arch) go build -o './dist/$(os)-$(arch)/go-pardocs' ./cmd/go-pardocs
+	@GOOS=$(os) GOARCH=$(arch) go build -o './dist/$(os)-$(arch)/go-pardocs_$(os)-$(arch)' ./cmd/go-pardocs
 
 .PHONY  release: $(PLATFORMS)
