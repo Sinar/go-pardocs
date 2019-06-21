@@ -88,8 +88,8 @@ github.com/google/subcommands v1.0.1 h1:/eqq+otEXm5vhfBrbREPCSVQbvofip6kIz+mX5TU
 github.com/google/subcommands v1.0.1/go.mod h1:ZjhPrFU+Olkh9WazFPsl27BQ4UPiG37m3yTrtFlrHVk=
 github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce h1:xdsDDbiBDQTKASoGEZ+pEmF1OnWuu8AQ9I8iNbHNeno=
 github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce/go.mod h1:oZtUIOe8dh44I2q6ScRibXws4Ajl+d+nod3AaR9vL5w=
-github.com/hhrutter/pdfcpu v0.1.23 h1:2o2/3fzcgfewTkVBtzoL1kDbQEYtl8iF79OL18ZpbBg=
-github.com/hhrutter/pdfcpu v0.1.23/go.mod h1:vRp7lzKvxF4+7VgBPjNxSuArQafA247dnd1LepVM+DE=
+github.com/hhrutter/pdfcpu v0.1.25 h1:PBz8IRAl2tVwVV09IC981NWQDq6Nb1pZDhgTFFecfAY=
+github.com/hhrutter/pdfcpu v0.1.25/go.mod h1:vRp7lzKvxF4+7VgBPjNxSuArQafA247dnd1LepVM+DE=
 github.com/hpcloud/tail v1.0.0 h1:nfCOvKYfkgYP8hkirhJocXT2+zOD8yUNjXaWfTlyFKI=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/inconshreveable/mousetrap v1.0.0 h1:Z8tu5sraLXCXIcARxBp/8cbvlwVa7Z1NHg9XEKhtSvM=
