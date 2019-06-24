@@ -1,0 +1,109 @@
+go-pardocs:  Parliament Docs
+A New Harapan
+25 Jun 2019
+
+Michael Leow
+FOI Initiatives, Sinar Project
+leow@sinarproject.org
+https://www.sinarproject.org/
+@leowmjw
+https://github.com/Sinar/go-pardocs
+
+* Agenda
+
+- May 9, 2018 .. A New Harapan
+- What is a Hansard?
+- What is ParDocs?
+- Concept
+- Lessons
+- Resources
+
+* May 9, 2018 .. A New Harapan
+
+.image assets/gopher-starwars-ashleymcnamara-small.png
+
+.caption _StarWars-Gopher_ by [[https://github.com/ashleymcnamara/gophers/blob/master/GOPHER_STAR_WARS.png][Ashley McNamara]]
+
+
+* What is a Hansard?
+
+- Previous: Only Spoken Questions are available online [[https://www.parlimen.gov.my/][Parliment]]
+- Previous: OKM minions needed to scan book of Written Answers 
+- Now: Written answers can be downloaded + Quality seems better (direct)
+
+.image assets/parlimen-gov-my.png
+
+: Hansard is the official record; inherited from the British
+: We had cases of pencil / pen marks to override numbering; not do clean
+: New Government - New document! - Old site :(
+
+* What is  ParDocs?
+
+.link https://pardocs.sinarproject.org
+
+- Originally written in Java, used iText library
+- Source: [[https://github.com/leowmjw/parliamentMY-QA-blast][parliamentMY-QA-blast]]
+- Lots of Regexp
+- Broke with the new gov :P
+
+: Long live Netbeans! Original parliamentMY-QA-blast 
+: Hansards are the
+
+* Lessons
+- Lessaons: Use internal for public
+- Lessaons: Use _test for integration test
+
+: what tod o? is too
+howto have new line?
+
+* Lessons: internal
+
+- Can expose most function + fields publicly
+- Top level only expose the top-level actions; brought up from internal SPlitter
+
+* Lessons: testing
+
+- Use testdata
+- Use tempdir
+- Structure it (TODO)
+- Run it end-to-end via public integration test
+
+* Concept
+
+- Concept: PDF
+- Concept: Hansard
+- Concept: ParliamentDocument
+
+: We work inside out from the raw PDF material to the fully formed Parliament Document which has publicly accessible APIs
+
+* Concept: PDF
+
+    type PDFPage struct {
+        PageNo           int
+        PDFPlainText     string
+        PDFTxtSameLines  []string // combined content with same line .. proxy for changes
+        PDFTxtSameStyles []string // combined content with same style .. proxy for changes
+    }
+    
+    type PDFDocument struct {
+        NumPages   int
+        Pages      []PDFPage
+        sourcePath string
+    }
+
+: Each PDF page can be represented by change of line (x,y-axis) or change of style.  
+: The change of style
+
+* CLI
+
+- Experimented with
+- Fills out the Configuration
+
+* Resources
+
+
+* GopherconSG
+
+- https://www.youtube.com/playlist?list=PLq2Nv-Sh8EbYBYteOWx9rNuy0JSF8mzsu#gopherconsg
+
+
