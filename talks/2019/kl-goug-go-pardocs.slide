@@ -37,17 +37,123 @@ https://github.com/Sinar/go-pardocs
 : We had cases of pencil / pen marks to override numbering; not do clean
 : New Government - New document! - Old site :(
 
-* What is  ParDocs?
+* What is  ParDocs? [[ https://pardocs.sinarproject.org ]]
 
-.link https://pardocs.sinarproject.org
+- Originally written in Java, used iText library - [[https://github.com/leowmjw/parliamentMY-QA-blast][parliamentMY-QA-blast]]
+- Lots of Regexp; fragile, 80% success rate
 
-- Originally written in Java, used iText library
-- Source: [[https://github.com/leowmjw/parliamentMY-QA-blast][parliamentMY-QA-blast]]
-- Lots of Regexp
-- Broke with the new gov :P
+.image assets/pardocs.png
 
 : Long live Netbeans! Original parliamentMY-QA-blast 
 : Hansards are the
+: Broke with the new government as the structure changed and no longer worked with previous RegExp
+
+* Concept
+
+- Concept: PDF, Hansard, Splitter, CLI
+
+.image assets/code-structure.png
+
+.caption Maps to [[https://godoc.org/github.com/Sinar/go-pardocs/internal/hansard#PDFPage][Internal APIs]]
+
+
+: We work inside out from the raw PDF material to the fully formed Parliament Document which has publicly accessible APIs
+
+* Concept: PDF
+
+When PDF source is loaded, extract hansard.MaxLineProcessed - 7 lines of PDFTxtSameLines
+
+    type PDFPage struct {
+        PageNo           int
+        PDFPlainText     string
+        PDFTxtSameLines  []string // combined content with same line .. proxy for changes
+        PDFTxtSameStyles []string // combined content with same style .. proxy for changes
+    }
+    
+    type PDFDocument struct {
+        NumPages   int
+        Pages      []PDFPage
+        sourcePath string
+    }
+
+.caption PDF text extraction from [[https://github.com/ledongthuc/pdf]] library
+
+: Each PDF page can be represented by change of line (x,y-axis) or change of style.  
+: The change of style can mean important information
+: Libraries used are
+
+* Concept: Hansard
+
+    type HansardPage struct {
+        ...
+    }
+    
+is persisted as the split plan:
+
+    type HansardQuestion struct {
+        QuestionNum           string
+        questionNumberSnippet string
+        PageNumStart          int
+        PageNumEnd            int
+        pages                 []HansardPage
+    }
+    
+    type HansardDocument struct {
+        ParliamentSession string // Get this from the front page cover .. or the reference lookup ..
+        HansardType       HansardType
+        HansardQuestions  []HansardQuestion
+        splitterState     splitterState
+        originalPDFPath   string // Used for split later ..
+    }
+    
+
+* Concept: Splitter
+
+    type SplitHansardDocumentPlan struct {
+        sessionName   string
+        hansardType   string
+        workingDir    string
+        sourcePDFPath string
+    }
+
+Split plan was saved earlier:
+
+    func SavePlan(confHansardType HansardType, workingDir string, sourcePDFPath string, hansardDoc *HansardDocument) {
+        ...
+    }
+
+and then later loaded to be used in actual split execution:
+
+    func (shdp *SplitHansardDocumentPlan) ExecuteSplit(label string, hq HansardQuestion) {
+        ...
+    }
+    
+.caption Split functionality from [[https://github.com/hhrutter/pdfcpu][pdfcpu]] library
+    
+* Concept: CLI
+
+- Experimented with using [[https://github.com/google/subcommands][subcommands]] library
+- Fills out the Configuration
+
+    ./dist/darwin-amd64/go-pardocs 
+    2019/06/25 07:32:23 Welcome to Sinar Project go-pardocs!
+    Usage: go-pardocs <flags> <subcommand> <subcommand args>
+    
+    Subcommands:
+            commands         list all command names
+            flags            describe all known top-level flags
+            help             describe subcommands and their syntax
+    
+    Subcommands for Execute Split:
+            split            Splitting SourcePDF based on plan ..
+    
+    Subcommands for Planning Split:
+            plan             Plan the Parliament Doc Splitting ..
+    
+    
+    Use "go-pardocs flags" for a list of top-level flags
+
+.caption Maps direct to [[https://godoc.org/github.com/Sinar/go-pardocs][ParDocs Public API]]
 
 * Lessons
 - Lessaons: Use internal for public
@@ -68,42 +174,23 @@ howto have new line?
 - Structure it (TODO)
 - Run it end-to-end via public integration test
 
-* Concept
+* What Next?
 
-- Concept: PDF
-- Concept: Hansard
-- Concept: ParliamentDocument
+- Add more tests
+- Fix know bug (regexp fails rune type contents)
+- Add more auto-detect capabilities for document type + parliament session
+- Add the capabilities to analyze full page content; extracting PopIt elements
 
-: We work inside out from the raw PDF material to the fully formed Parliament Document which has publicly accessible APIs
-
-* Concept: PDF
-
-    type PDFPage struct {
-        PageNo           int
-        PDFPlainText     string
-        PDFTxtSameLines  []string // combined content with same line .. proxy for changes
-        PDFTxtSameStyles []string // combined content with same style .. proxy for changes
-    }
-    
-    type PDFDocument struct {
-        NumPages   int
-        Pages      []PDFPage
-        sourcePath string
-    }
-
-: Each PDF page can be represented by change of line (x,y-axis) or change of style.  
-: The change of style
-
-* CLI
-
-- Experimented with
-- Fills out the Configuration
 
 * Resources
 
+.link https://pardocs.sinarproject.org
+.link https://github.com/Sinar/go-pardocs
+.link https://github.com/Sinar/odd2019
 
-* GopherconSG
 
-- https://www.youtube.com/playlist?list=PLq2Nv-Sh8EbYBYteOWx9rNuy0JSF8mzsu#gopherconsg
+* GopherconSG! Discuss!
+
+.link https://www.youtube.com/playlist?list=PLq2Nv-Sh8EbYBYteOWx9rNuy0JSF8mzsu#gopherconsg
 
 
