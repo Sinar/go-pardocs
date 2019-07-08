@@ -8,7 +8,7 @@ test:
 	@go test ./...
 
 # https://vic.demuzere.be/articles/golang-makefile-crosscompile/
-PLATFORMS := linux/amd64 windows/amd64 darwin/amd64
+PLATFORMS := linux/amd64 windows/amd64 darwin/amd64 freebsd/amd64
 
 temp = $(subst /, ,$@)
 os = $(word 1, $(temp))
