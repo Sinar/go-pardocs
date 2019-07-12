@@ -76,6 +76,10 @@ func (pdfDoc *PDFDocument) extractPDF() error {
 		// copy over plain text; short form
 		pt, pterr := p.GetPlainText(nil)
 		if pterr != nil {
+			if pterr.Error() == "malformed PDF: reading at offset 0: stream not present" {
+				fmt.Println("**WILL IGNORE!!!! *****")
+				continue
+			}
 			return xerrors.Errorf(" GetPlainText ERROR: %w", pt)
 		}
 		pdfPage.PDFPlainText = pt
