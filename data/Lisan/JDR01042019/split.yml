@@ -6,12 +6,9 @@ hansardquestions:
   pagenumend: 3
 - questionnum: "2"
   pagenumstart: 4
-  pagenumend: 6
-- questionnum: "1"
-  pagenumstart: 7
-  pagenumend: 7
-- questionnum: "2019"
-  pagenumstart: 8
+  pagenumend: 5
+- questionnum: "3"
+  pagenumstart: 6
   pagenumend: 10
 - questionnum: "4"
   pagenumstart: 11
