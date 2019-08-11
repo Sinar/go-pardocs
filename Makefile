@@ -1,7 +1,13 @@
 run: build
+	@./go-pardebate
+
+build:
+	@go build ./cmd/go-pardebate
+
+runpardocs: buildpardocs
 	@./go-pardocs
     
-build: 
+buildpardocs: 
 	@go build ./cmd/go-pardocs
 
 test:
@@ -19,5 +25,6 @@ release: $(PLATFORMS)
 $(PLATFORMS):
 	@mkdir -p dist/$(os)-$(arch)
 	@GOOS=$(os) GOARCH=$(arch) go build -o './dist/$(os)-$(arch)/go-pardocs_$(os)-$(arch)' ./cmd/go-pardocs
+	@GOOS=$(os) GOARCH=$(arch) go build -o './dist/$(os)-$(arch)/go-pardebate_$(os)-$(arch)' ./cmd/go-pardebate
 
 .PHONY  release: $(PLATFORMS)
