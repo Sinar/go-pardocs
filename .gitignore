@@ -13,6 +13,7 @@
 
 # Ignore binary
 go-pardocs
+go-pardebate
 
 # Ignore dist binary
 dist/*
@@ -27,4 +28,9 @@ splitout/*
 
 # Ignore Goland
 .idea/*
+
+# Ignore certain testdata PDFs while experimenting
+internal/debate/testdata/*.pdf
+internal/**/*.pdf
+testdata/**
 

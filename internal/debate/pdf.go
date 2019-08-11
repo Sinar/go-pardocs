@@ -24,8 +24,12 @@ type PDFDocument struct {
 	sourcePath string
 }
 
+type ExtractPDFOptions struct {
+	NumPages int
+}
+
 const (
-	MaxLineProcessed = 5
+	MaxLineProcessed = 100
 )
 
 func NewPDFDoc(sourcePath string) (*PDFDocument, error) {
@@ -36,13 +40,67 @@ func NewPDFDoc(sourcePath string) (*PDFDocument, error) {
 		sourcePath: sourcePath,
 	}
 
-	exerr := pdfDoc.extractPDF()
+	// Example of options ..
+	options := &ExtractPDFOptions{}
+	//options := &ExtractPDFOptions{NumPages: 2}
+
+	exerr := pdfDoc.extractPDFLinesOnly(options)
 	if exerr != nil {
 		return nil, exerr
 	}
 	return &pdfDoc, nil
 
 }
+
+func (pdfDoc *PDFDocument) extractPDFLinesOnly(options *ExtractPDFOptions) error {
+	fmt.Println("In extractPDFLinesOnly ...")
+
+	var pdfPages []PDFPage
+
+	// Example form PR + comments --> https://github.com/rsc/pdf/pull/21/files?short_path=04c6e90#diff-04c6e90faac2675aa89e2176d2eec7d8
+	f, r, err := pdf.Open(pdfDoc.sourcePath)
+	defer f.Close()
+	if err != nil {
+		return xerrors.Errorf("Open failed: %s -  %w", pdfDoc.sourcePath, err)
+	}
+	var extractNumPages int
+	if options != nil && options.NumPages > 0 {
+		extractNumPages = options.NumPages
+	} else {
+		extractNumPages = 3
+	}
+	for i := 1; i <= extractNumPages; i++ {
+		// init
+		pdfPage := PDFPage{}
+		pdfPage.PageNo = i
+
+		// Get details for the page
+		p := r.Page(i)
+		if p.V.IsNull() {
+			continue
+		}
+		pt, pterr := p.GetPlainText(nil)
+		if pterr != nil {
+			if pterr.Error() == "malformed PDF: reading at offset 0: stream not present" {
+				fmt.Println("**WILL IGNORE!!!! *****")
+				continue
+			}
+			return xerrors.Errorf(" GetPlainText ERROR: %w", pt)
+		}
+
+		// Top 10 lines for this page by line analysis
+		//fmt.Println("== START ANALYZE by LINE")
+		pdfPage.PDFTxtSameLines = make([]string, 0, 20)
+		extractTxtSameLine(&pdfPage.PDFTxtSameLines, p.Content().Text)
+
+		pdfPages = append(pdfPages, pdfPage)
+	}
+
+	pdfDoc.Pages = pdfPages
+
+	return nil
+}
+
 func (pdfDoc *PDFDocument) extractPDF() error {
 	fmt.Println("In ExtractPDF ...")
 
@@ -62,7 +120,7 @@ func (pdfDoc *PDFDocument) extractPDF() error {
 	// iterate through all the pages one by one
 	pdfDoc.NumPages = r.NumPage()
 	// DEBUG
-	//pdfDoc.NumPages = 7
+	pdfDoc.NumPages = 3
 	for i := 1; i <= pdfDoc.NumPages; i++ {
 		// init
 		pdfPage := PDFPage{}
@@ -237,4 +295,12 @@ func extractTxtSameStyles(ptrTxtSameStyles *[]string, pdfContentTxt []pdf.Text) 
 	//spew.Dump(ptrTxtSameStyles)
 
 	return nil
+}
+
+func RangeTOC(pdfDoc *PDFDocument) (startPage int, endPage int) {
+	startPage = 0
+	endPage = 0
+
+	// Do some calculations here ..
+	return startPage, endPage
 }

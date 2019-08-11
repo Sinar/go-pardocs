@@ -101,3 +101,34 @@ func Test_extractTxtSameStyles(t *testing.T) {
 		})
 	}
 }
+
+func TestPDFDocument_extractPDFLinesOnly(t *testing.T) {
+	type fields struct {
+		NumPages   int
+		Pages      []PDFPage
+		sourcePath string
+	}
+	type args struct {
+		options *ExtractPDFOptions
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pdfDoc := &PDFDocument{
+				NumPages:   tt.fields.NumPages,
+				Pages:      tt.fields.Pages,
+				sourcePath: tt.fields.sourcePath,
+			}
+			if err := pdfDoc.extractPDFLinesOnly(tt.args.options); (err != nil) != tt.wantErr {
+				t.Errorf("extractPDFLinesOnly() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
