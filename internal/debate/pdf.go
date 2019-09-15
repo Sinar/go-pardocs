@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/ledongthuc/pdf"
-	"golang.org/x/xerrors"
 )
 
 // All functions dealing with PDFs here; the output to be returned and fed into the metadata extraction in main
@@ -61,7 +60,7 @@ func (pdfDoc *PDFDocument) extractPDFLinesOnly(options *ExtractPDFOptions) error
 	f, r, err := pdf.Open(pdfDoc.sourcePath)
 	defer f.Close()
 	if err != nil {
-		return xerrors.Errorf("Open failed: %s -  %w", pdfDoc.sourcePath, err)
+		return fmt.Errorf("Open failed: %s -  %w", pdfDoc.sourcePath, err)
 	}
 	var extractNumPages int
 	if options != nil && options.NumPages > 0 {
@@ -85,7 +84,7 @@ func (pdfDoc *PDFDocument) extractPDFLinesOnly(options *ExtractPDFOptions) error
 				fmt.Println("**WILL IGNORE!!!! *****")
 				continue
 			}
-			return xerrors.Errorf(" GetPlainText ERROR: %w", pt)
+			return fmt.Errorf(" GetPlainText ERROR: %w", pt)
 		}
 
 		// Top 10 lines for this page by line analysis
@@ -115,7 +114,7 @@ func (pdfDoc *PDFDocument) extractPDF() error {
 	f, r, err := pdf.Open(pdfDoc.sourcePath)
 	defer f.Close()
 	if err != nil {
-		return xerrors.Errorf("Open failed: %s -  %w", pdfDoc.sourcePath, err)
+		return fmt.Errorf("Open failed: %s -  %w", pdfDoc.sourcePath, err)
 	}
 	// iterate through all the pages one by one
 	pdfDoc.NumPages = r.NumPage()
@@ -138,7 +137,7 @@ func (pdfDoc *PDFDocument) extractPDF() error {
 				fmt.Println("**WILL IGNORE!!!! *****")
 				continue
 			}
-			return xerrors.Errorf(" GetPlainText ERROR: %w", pt)
+			return fmt.Errorf(" GetPlainText ERROR: %w", pt)
 		}
 		pdfPage.PDFPlainText = pt
 		// processStyleChanges ..

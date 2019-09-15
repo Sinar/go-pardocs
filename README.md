@@ -4,7 +4,7 @@ Tools to process published Parliament documents (PDFs only) into more accessible
 
 Assumes: 
 - OSX dev environment
-- Go v1.12 and above (uses go mod)
+- Go v1.13 and above (uses go mod)
 - Release for Linux, Windows, OSX available as cross-compile
 
 ## Usage
