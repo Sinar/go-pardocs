@@ -34,30 +34,3 @@ func TestDebatePDFLoad(t *testing.T) {
 	}
 
 }
-
-func TestRangeTOC(t *testing.T) {
-	type args struct {
-		pdfDoc *debate.PDFDocument
-	}
-	// Open and process the variety of PDFs here ..
-
-	tests := []struct {
-		name          string
-		args          args
-		wantStartPage int
-		wantEndPage   int
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotStartPage, gotEndPage := debate.RangeTOC(tt.args.pdfDoc)
-			if gotStartPage != tt.wantStartPage {
-				t.Errorf("RangeTOC() gotStartPage = %v, want %v", gotStartPage, tt.wantStartPage)
-			}
-			if gotEndPage != tt.wantEndPage {
-				t.Errorf("RangeTOC() gotEndPage = %v, want %v", gotEndPage, tt.wantEndPage)
-			}
-		})
-	}
-}

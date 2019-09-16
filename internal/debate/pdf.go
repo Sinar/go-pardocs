@@ -28,7 +28,7 @@ type ExtractPDFOptions struct {
 }
 
 const (
-	MaxLineProcessed = 100
+	MaxLineProcessed = 1000
 )
 
 func NewPDFDoc(sourcePath string) (*PDFDocument, error) {
@@ -51,6 +51,55 @@ func NewPDFDoc(sourcePath string) (*PDFDocument, error) {
 
 }
 
+func (pdfDoc *PDFDocument) extractPDFStylesOnly(options *ExtractPDFOptions) error {
+	fmt.Println("In extractPDFStylesOnly ...")
+
+	var pdfPages []PDFPage
+	// Example form PR + comments --> https://github.com/rsc/pdf/pull/21/files?short_path=04c6e90#diff-04c6e90faac2675aa89e2176d2eec7d8
+	f, r, err := pdf.Open(pdfDoc.sourcePath)
+	defer f.Close()
+	if err != nil {
+		return fmt.Errorf("Open failed: %s -  %w", pdfDoc.sourcePath, err)
+	}
+	var extractNumPages int
+	if options != nil && options.NumPages > 0 {
+		extractNumPages = options.NumPages
+	} else {
+		extractNumPages = 5
+	}
+	for i := 1; i <= extractNumPages; i++ {
+		// init
+		pdfPage := PDFPage{}
+		pdfPage.PageNo = i
+
+		// Get details for the page
+		p := r.Page(i)
+		if p.V.IsNull() {
+			continue
+		}
+		pt, pterr := p.GetPlainText(nil)
+		if pterr != nil {
+			if pterr.Error() == "malformed PDF: reading at offset 0: stream not present" {
+				fmt.Println("**WILL IGNORE!!!! *****")
+				continue
+			}
+			return fmt.Errorf(" GetPlainText ERROR: %w", pt)
+		}
+
+		// Top 10
+		//fmt.Println("== START ANALYZE by STYLE")
+		pdfPage.PDFTxtSameStyles = make([]string, 0, 20)
+		extractTxtSameStyles(&pdfPage.PDFTxtSameStyles, p.Content().Text)
+		//fmt.Println("== END ANALYZE by STYLE")
+
+		pdfPages = append(pdfPages, pdfPage)
+	}
+
+	pdfDoc.Pages = pdfPages
+
+	return nil
+}
+
 func (pdfDoc *PDFDocument) extractPDFLinesOnly(options *ExtractPDFOptions) error {
 	fmt.Println("In extractPDFLinesOnly ...")
 
@@ -66,7 +115,7 @@ func (pdfDoc *PDFDocument) extractPDFLinesOnly(options *ExtractPDFOptions) error
 	if options != nil && options.NumPages > 0 {
 		extractNumPages = options.NumPages
 	} else {
-		extractNumPages = 3
+		extractNumPages = 5
 	}
 	for i := 1; i <= extractNumPages; i++ {
 		// init
@@ -100,7 +149,7 @@ func (pdfDoc *PDFDocument) extractPDFLinesOnly(options *ExtractPDFOptions) error
 	return nil
 }
 
-func (pdfDoc *PDFDocument) extractPDF() error {
+func (pdfDoc *PDFDocument) extractPDF(options *ExtractPDFOptions) error {
 	fmt.Println("In ExtractPDF ...")
 
 	// Guard functions here ..
@@ -116,11 +165,13 @@ func (pdfDoc *PDFDocument) extractPDF() error {
 	if err != nil {
 		return fmt.Errorf("Open failed: %s -  %w", pdfDoc.sourcePath, err)
 	}
-	// iterate through all the pages one by one
-	pdfDoc.NumPages = r.NumPage()
-	// DEBUG
-	pdfDoc.NumPages = 3
-	for i := 1; i <= pdfDoc.NumPages; i++ {
+	var extractNumPages int
+	if options != nil && options.NumPages > 0 {
+		extractNumPages = options.NumPages
+	} else {
+		extractNumPages = 5
+	}
+	for i := 1; i <= extractNumPages; i++ {
 		// init
 		pdfPage := PDFPage{}
 		pdfPage.PageNo = i

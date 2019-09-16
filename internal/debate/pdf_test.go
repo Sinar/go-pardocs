@@ -53,7 +53,7 @@ func TestPDFDocument_extractPDF(t *testing.T) {
 				Pages:      tt.fields.Pages,
 				sourcePath: tt.fields.sourcePath,
 			}
-			if err := pdfDoc.extractPDF(); (err != nil) != tt.wantErr {
+			if err := pdfDoc.extractPDF(nil); (err != nil) != tt.wantErr {
 				t.Errorf("extractPDF() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -128,6 +128,37 @@ func TestPDFDocument_extractPDFLinesOnly(t *testing.T) {
 			}
 			if err := pdfDoc.extractPDFLinesOnly(tt.args.options); (err != nil) != tt.wantErr {
 				t.Errorf("extractPDFLinesOnly() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestPDFDocument_extractPDFStylesOnly(t *testing.T) {
+	type fields struct {
+		NumPages   int
+		Pages      []PDFPage
+		sourcePath string
+	}
+	type args struct {
+		options *ExtractPDFOptions
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pdfDoc := &PDFDocument{
+				NumPages:   tt.fields.NumPages,
+				Pages:      tt.fields.Pages,
+				sourcePath: tt.fields.sourcePath,
+			}
+			if err := pdfDoc.extractPDFStylesOnly(tt.args.options); (err != nil) != tt.wantErr {
+				t.Errorf("extractPDFStylesOnly() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
