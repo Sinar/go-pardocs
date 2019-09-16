@@ -1,5 +1,9 @@
 package debate
 
+import (
+	"fmt"
+)
+
 type DebateAttendees struct {
 	FullName     string
 	ShortName    string
@@ -43,10 +47,37 @@ type DebateTOC struct {
 }
 
 const (
-	MaxDPFSample = 3
+	MaxPDFSample = 3
 )
 
+type ErrorNoTOCFound struct {
+	err string // Error description ..
+}
+
+func (e ErrorNoTOCFound) Error() string {
+	return e.err
+}
+
 func NewDebateTOC(sourcePath string) (*DebateTOC, error) {
+	pdfDoc := PDFDocument{
+		sourcePath: sourcePath,
+	}
+
+	// Example of options ..
+	options := &ExtractPDFOptions{NumPages: MaxPDFSample}
+	//options := &ExtractPDFOptions{NumPages: 2}
+
+	exerr := pdfDoc.extractPDF(options)
+	if exerr != nil {
+		return nil, fmt.Errorf("extractPDF FAIL: %w", exerr)
+	}
+
+	foundTOC := false
+
+	if !foundTOC {
+		return nil, fmt.Errorf("NewDebateTOC FAIL: %w",
+			ErrorNoTOCFound{err: fmt.Sprintf("PDF at %s has NO TOC!", sourcePath)})
+	}
 	debateTOC := DebateTOC{}
 
 	// Extract lines only; sampling with the size
