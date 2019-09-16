@@ -73,6 +73,10 @@ func NewDebateTOC(sourcePath string) (*DebateTOC, error) {
 	}
 
 	foundTOC := false
+	// Look out for TOCs!
+	if pdfDoc.NumPages > 1 {
+		foundTOC = true
+	}
 
 	if !foundTOC {
 		return nil, fmt.Errorf("NewDebateTOC FAIL: %w",

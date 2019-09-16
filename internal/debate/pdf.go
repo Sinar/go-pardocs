@@ -67,6 +67,8 @@ func (pdfDoc *PDFDocument) extractPDFStylesOnly(options *ExtractPDFOptions) erro
 	} else {
 		extractNumPages = 5
 	}
+	// Fill up the Number of Pages in the struct
+	pdfDoc.NumPages = extractNumPages
 	for i := 1; i <= extractNumPages; i++ {
 		// init
 		pdfPage := PDFPage{}
@@ -117,6 +119,8 @@ func (pdfDoc *PDFDocument) extractPDFLinesOnly(options *ExtractPDFOptions) error
 	} else {
 		extractNumPages = 5
 	}
+	// Fill up the Number of Pages in the struct
+	pdfDoc.NumPages = extractNumPages
 	for i := 1; i <= extractNumPages; i++ {
 		// init
 		pdfPage := PDFPage{}
@@ -171,6 +175,9 @@ func (pdfDoc *PDFDocument) extractPDF(options *ExtractPDFOptions) error {
 	} else {
 		extractNumPages = 5
 	}
+	// Fill up the Number of Pages in the struct
+	pdfDoc.NumPages = extractNumPages
+
 	for i := 1; i <= extractNumPages; i++ {
 		// init
 		pdfPage := PDFPage{}
