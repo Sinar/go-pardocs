@@ -12,7 +12,6 @@ import (
 
 type PDFPage struct {
 	PageNo           int
-	PDFPlainText     string
 	PDFTxtSameLines  []string // combined content with same line .. proxy for changes
 	PDFTxtSameStyles []string // combined content with same style .. proxy for changes
 }
@@ -197,7 +196,8 @@ func (pdfDoc *PDFDocument) extractPDF(options *ExtractPDFOptions) error {
 			}
 			return fmt.Errorf(" GetPlainText ERROR: %w", pt)
 		}
-		pdfPage.PDFPlainText = pt
+		// NO need this ,.
+		//pdfPage.PDFPlainText = pt
 		// processStyleChanges ..
 		//extractTxtSameStyles()
 		// DEBUG

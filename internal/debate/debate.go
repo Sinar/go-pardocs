@@ -2,6 +2,8 @@ package debate
 
 import (
 	"fmt"
+
+	"github.com/sanity-io/litter"
 )
 
 type DebateAttendees struct {
@@ -25,9 +27,60 @@ type Events struct {
 	RelatedOrgs   []Organization
 }
 
+type ParliamentNum int
+
+const (
+	DEBATE_PAR01 ParliamentNum = iota
+	DEBATE_PAR02
+	DEBATE_PAR03
+	DEBATE_PAR04
+	DEBATE_PAR05
+	DEBATE_PAR06
+	DEBATE_PAR07
+	DEBATE_PAR08
+	DEBATE_PAR09
+	DEBATE_PAR10
+	DEBATE_PAR11
+	DEBATE_PAR12
+	DEBATE_PAR13
+	DEBATE_PAR14
+	DEBATE_PAR15
+	DEBATE_PAR16
+)
+
+type ParliamentSession int
+
+const (
+	DEBATE_PENGGAL1 ParliamentSession = iota
+	DEBATE_PENGGAL2
+	DEBATE_PENGGAL3
+	DEBATE_PENGGAL4
+	DEBATE_PENGGAL5
+)
+
+type SessionDay int
+
+const (
+	DEBATE_MONDAY SessionDay = iota
+	DEBATE_TUESDAY
+	DEBATE_WEDNESDAY
+	DEBATE_THURSDAY
+	DEBATE_FRIDAY
+	DEBATE_SATURDAY
+	DEBATE_SUNDAY
+)
+
+type SessionMeta struct {
+	SessionNum        int
+	ParliamentNum     ParliamentNum
+	ParliamentSession ParliamentSession
+	SessionDay        SessionDay
+}
+
 type DebateSession struct {
 	SessionName   string
 	SessionDate   string
+	SessionMeta   SessionMeta
 	OrderedEvents []Events
 	Attendees     []DebateAttendees
 }
@@ -71,6 +124,8 @@ func NewDebateTOC(sourcePath string) (*DebateTOC, error) {
 	if exerr != nil {
 		return nil, fmt.Errorf("extractPDF FAIL: %w", exerr)
 	}
+
+	litter.Dump(pdfDoc.Pages)
 
 	foundTOC := false
 	// Look out for TOCs!
