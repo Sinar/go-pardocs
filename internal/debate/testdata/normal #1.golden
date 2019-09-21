@@ -1,1 +1,17 @@
-&debate.DebateTOC{}
+&debate.DebateTOC{
+  detectedSessionName: "PARLIMEN KEEMPAT BELAS",
+  detectedSessionDate: "dasar laut di dalam perairan Malaysia berkuat kuasa mulai 1 April 2019.  ",
+  normalizedSessionDate: "",
+  detectedTopics: []string{
+    " RANG UNDANG-UNDANG DI BAWAH P.M. 62 (Halaman      1) ",
+    "JAWAPAN-JAWAPAN MENTERI BAGI PERTANYAAN-PERTANYAAN (Halaman      1) ",
+    "JAWAPAN-JAWAPAN LISAN BAGI PERTANYAAN-PERTANYAAN (Halaman    10) ",
+    "  Peraturan Mesyuarat (Halaman    37) ",
+    "   dan Kebebasan (Halaman    37) ",
+    " ■� Melantik Pengerusi Jawatankuasa Kira-kira Wang Negara (Halaman    85) ",
+    " Rang Undang-undang Undang-undang Sivil (Pindaan) 2018 (Halaman    87)  ",
+    "- Akta Pendanaan Kerajaan 1983 (Halaman   117) ",
+    "- Akta Cukai Jualan 2018 (Halaman   119) ",
+    "- Akta Kastam 1967 1983 (Halaman   120)",
+  },
+}

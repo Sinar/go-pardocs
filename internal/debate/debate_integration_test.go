@@ -7,8 +7,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/sanity-io/litter"
 
@@ -27,7 +28,7 @@ func TestNewDebateTOC(t *testing.T) {
 		wantErr bool
 	}{
 		//{"Missing TOC", args{"testdata/Bad-DR-DewanSelangor.pdf"}, nil, true},
-		{"badly formed", args{"testdata/DR-01072019.pdf"}, true},
+		{"empty page2", args{"testdata/DR-01072019.pdf"}, false},
 		{"normal #1", args{"testdata/DR-11042019.pdf"}, false},
 		{"normal #2", args{"testdata/DR-01072019_new.pdf"}, false},
 	}
@@ -51,28 +52,34 @@ func TestNewDebateTOC(t *testing.T) {
 				}
 			} else {
 				// Use Goldenfile pattern
-				actual := []byte(litter.Sdump(got))
+				sq := litter.Options{
+					HidePrivateFields: false,
+				}
+				actual := []byte(sq.Sdump(got))
 				golden := filepath.Join("testdata", tt.name+".golden")
 				if *update {
 					ioutil.WriteFile(golden, actual, 0644)
 				}
 				want, rerr := ioutil.ReadFile(golden)
 				if rerr != nil {
+					// Cannot proceed with one golden file update
 					if os.IsNotExist(rerr) {
-						fmt.Println("MISSING GOLDEN!! ", rerr)
-						t.Fail()
+						t.Fatalf("Ensure run with -update flag first time! ERR: %s", rerr.Error())
 					}
-					if errors.Is(rerr, os.ErrNotExist) {
-						fmt.Println("Missing file?")
-						t.Fatal()
-					}
-					fmt.Println("FATAL WHY!!")
-					litter.Dump(rerr)
-					t.Fatal(rerr)
+					// Below is one way to do; but above is backwards compatible
+					//if errors.Is(rerr, os.ErrNotExist) {
+					//	fmt.Println("Missing file?")
+					//	t.Fatal()
+					//}
+					t.Fatalf("Unexpected error: %s", rerr.Error())
 				}
 				// Test TOC structure out ..
-				if !reflect.DeepEqual(actual, want) {
-					t.Errorf("NewDebateTOC() got = %v, want %v", got, want)
+				//if !reflect.DeepEqual(actual, want) {
+				//	t.Errorf("NewDebateTOC() got = %v, want %v", got, want)
+				//}
+
+				if diff := cmp.Diff(actual, want); diff != "" {
+					t.Errorf("NewDebateTOC() mismatch (-actual +want):\n%s", diff)
 				}
 			}
 		})
