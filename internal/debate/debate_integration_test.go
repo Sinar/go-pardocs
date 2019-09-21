@@ -2,12 +2,20 @@ package debate_test
 
 import (
 	"errors"
+	"flag"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
+	"github.com/sanity-io/litter"
+
 	"github.com/Sinar/go-pardocs/internal/debate"
 )
+
+var update = flag.Bool("update", false, "update .golden files")
 
 func TestNewDebateTOC(t *testing.T) {
 	type args struct {
@@ -16,13 +24,12 @@ func TestNewDebateTOC(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *debate.DebateTOC
 		wantErr bool
 	}{
 		//{"Missing TOC", args{"testdata/Bad-DR-DewanSelangor.pdf"}, nil, true},
-		{"badly formed", args{"testdata/DR-01072019.pdf"}, &debate.DebateTOC{}, false},
-		{"normal #1", args{"testdata/DR-11042019.pdf"}, &debate.DebateTOC{}, false},
-		{"normal #2", args{"testdata/DR-01072019_new.pdf"}, &debate.DebateTOC{}, false},
+		{"badly formed", args{"testdata/DR-01072019.pdf"}, true},
+		{"normal #1", args{"testdata/DR-11042019.pdf"}, false},
+		{"normal #2", args{"testdata/DR-01072019_new.pdf"}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -42,11 +49,31 @@ func TestNewDebateTOC(t *testing.T) {
 				} else {
 					t.Fail()
 				}
-			}
-
-			// Test TOC structure out ..
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewDebateTOC() got = %v, want %v", got, tt.want)
+			} else {
+				// Use Goldenfile pattern
+				actual := []byte(litter.Sdump(got))
+				golden := filepath.Join("testdata", tt.name+".golden")
+				if *update {
+					ioutil.WriteFile(golden, actual, 0644)
+				}
+				want, rerr := ioutil.ReadFile(golden)
+				if rerr != nil {
+					if os.IsNotExist(rerr) {
+						fmt.Println("MISSING GOLDEN!! ", rerr)
+						t.Fail()
+					}
+					if errors.Is(rerr, os.ErrNotExist) {
+						fmt.Println("Missing file?")
+						t.Fatal()
+					}
+					fmt.Println("FATAL WHY!!")
+					litter.Dump(rerr)
+					t.Fatal(rerr)
+				}
+				// Test TOC structure out ..
+				if !reflect.DeepEqual(actual, want) {
+					t.Errorf("NewDebateTOC() got = %v, want %v", got, want)
+				}
 			}
 		})
 	}
@@ -75,4 +102,10 @@ func TestRangeTOC(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Helper function to get PDF raw content
+func loadGoldenDebateTOC(sourcePath string) *debate.DebateTOC {
+	// Strip to baseline and load the .golden version
+	return nil
 }
