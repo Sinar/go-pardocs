@@ -21,7 +21,7 @@ func TestNewPDFDoc(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewPDFDoc(tt.args.sourcePath)
+			got, err := NewPDFDoc(tt.args.sourcePath, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewPDFDoc() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -51,7 +51,7 @@ func TestPDFDocument_extractPDF(t *testing.T) {
 			pdfDoc := &PDFDocument{
 				NumPages:   tt.fields.NumPages,
 				Pages:      tt.fields.Pages,
-				sourcePath: tt.fields.sourcePath,
+				SourcePath: tt.fields.sourcePath,
 			}
 			if err := pdfDoc.extractPDF(nil); (err != nil) != tt.wantErr {
 				t.Errorf("extractPDF() error = %v, wantErr %v", err, tt.wantErr)
@@ -124,7 +124,7 @@ func TestPDFDocument_extractPDFLinesOnly(t *testing.T) {
 			pdfDoc := &PDFDocument{
 				NumPages:   tt.fields.NumPages,
 				Pages:      tt.fields.Pages,
-				sourcePath: tt.fields.sourcePath,
+				SourcePath: tt.fields.sourcePath,
 			}
 			if err := pdfDoc.extractPDFLinesOnly(tt.args.options); (err != nil) != tt.wantErr {
 				t.Errorf("extractPDFLinesOnly() error = %v, wantErr %v", err, tt.wantErr)
@@ -155,7 +155,7 @@ func TestPDFDocument_extractPDFStylesOnly(t *testing.T) {
 			pdfDoc := &PDFDocument{
 				NumPages:   tt.fields.NumPages,
 				Pages:      tt.fields.Pages,
-				sourcePath: tt.fields.sourcePath,
+				SourcePath: tt.fields.sourcePath,
 			}
 			if err := pdfDoc.extractPDFStylesOnly(tt.args.options); (err != nil) != tt.wantErr {
 				t.Errorf("extractPDFStylesOnly() error = %v, wantErr %v", err, tt.wantErr)

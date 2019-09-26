@@ -19,28 +19,32 @@ type PDFPage struct {
 type PDFDocument struct {
 	NumPages   int
 	Pages      []PDFPage
-	sourcePath string
+	SourcePath string
 }
 
 type ExtractPDFOptions struct {
-	NumPages int
+	StartPage int
+	NumPages  int
 }
 
 const (
-	MaxLineProcessed = 1000
+	MaxLineProcessed = 100
 )
 
-func NewPDFDoc(sourcePath string) (*PDFDocument, error) {
+func NewPDFDoc(sourcePath string, options *ExtractPDFOptions) (*PDFDocument, error) {
 	// TODO: Guard checks to ensure file exists?? etc.
 	// and is readbale??
 
 	pdfDoc := PDFDocument{
-		sourcePath: sourcePath,
+		SourcePath: sourcePath,
 	}
 
 	// Example of options ..
-	options := &ExtractPDFOptions{}
-	//options := &ExtractPDFOptions{NumPages: 2}
+	//if options == nil {
+	//	options = &ExtractPDFOptions{}
+	//}
+	// DEBUG
+	//options = &ExtractPDFOptions{NumPages: 5}
 
 	exerr := pdfDoc.extractPDFLinesOnly(options)
 	if exerr != nil {
@@ -50,25 +54,36 @@ func NewPDFDoc(sourcePath string) (*PDFDocument, error) {
 
 }
 
+func (pdfDoc *PDFDocument) loadPDFContent() error {
+	// Method implement; can load from fixture or actual file?
+	return nil
+}
+
 func (pdfDoc *PDFDocument) extractPDFStylesOnly(options *ExtractPDFOptions) error {
 	fmt.Println("In extractPDFStylesOnly ...")
 
 	var pdfPages []PDFPage
 	// Example form PR + comments --> https://github.com/rsc/pdf/pull/21/files?short_path=04c6e90#diff-04c6e90faac2675aa89e2176d2eec7d8
-	f, r, err := pdf.Open(pdfDoc.sourcePath)
+	f, r, err := pdf.Open(pdfDoc.SourcePath)
 	defer f.Close()
 	if err != nil {
-		return fmt.Errorf("Open failed: %s -  %w", pdfDoc.sourcePath, err)
+		return fmt.Errorf("Open failed: %s -  %w", pdfDoc.SourcePath, err)
 	}
-	var extractNumPages int
-	if options != nil && options.NumPages > 0 {
-		extractNumPages = options.NumPages
-	} else {
-		extractNumPages = 5
+	// Options items
+	startPage := 1
+	extractNumPages := r.NumPage()
+	if options != nil {
+		if options.StartPage > 1 {
+			startPage = options.StartPage
+		}
+
+		if options.NumPages > 0 {
+			extractNumPages = options.NumPages
+		}
 	}
 	// Fill up the Number of Pages in the struct
 	pdfDoc.NumPages = extractNumPages
-	for i := 1; i <= extractNumPages; i++ {
+	for i := startPage; i <= extractNumPages; i++ {
 		// init
 		pdfPage := PDFPage{}
 		pdfPage.PageNo = i
@@ -107,20 +122,26 @@ func (pdfDoc *PDFDocument) extractPDFLinesOnly(options *ExtractPDFOptions) error
 	var pdfPages []PDFPage
 
 	// Example form PR + comments --> https://github.com/rsc/pdf/pull/21/files?short_path=04c6e90#diff-04c6e90faac2675aa89e2176d2eec7d8
-	f, r, err := pdf.Open(pdfDoc.sourcePath)
+	f, r, err := pdf.Open(pdfDoc.SourcePath)
 	defer f.Close()
 	if err != nil {
-		return fmt.Errorf("Open failed: %s -  %w", pdfDoc.sourcePath, err)
+		return fmt.Errorf("Open failed: %s -  %w", pdfDoc.SourcePath, err)
 	}
-	var extractNumPages int
-	if options != nil && options.NumPages > 0 {
-		extractNumPages = options.NumPages
-	} else {
-		extractNumPages = 5
+	// Options items
+	startPage := 1
+	extractNumPages := r.NumPage()
+	if options != nil {
+		if options.StartPage > 1 {
+			startPage = options.StartPage
+		}
+
+		if options.NumPages > 0 {
+			extractNumPages = options.NumPages
+		}
 	}
 	// Fill up the Number of Pages in the struct
 	pdfDoc.NumPages = extractNumPages
-	for i := 1; i <= extractNumPages; i++ {
+	for i := startPage; i <= extractNumPages; i++ {
 		// init
 		pdfPage := PDFPage{}
 		pdfPage.PageNo = i
@@ -163,21 +184,29 @@ func (pdfDoc *PDFDocument) extractPDF(options *ExtractPDFOptions) error {
 	var pdfPages []PDFPage
 
 	// Example form PR + comments --> https://github.com/rsc/pdf/pull/21/files?short_path=04c6e90#diff-04c6e90faac2675aa89e2176d2eec7d8
-	f, r, err := pdf.Open(pdfDoc.sourcePath)
+	f, r, err := pdf.Open(pdfDoc.SourcePath)
 	defer f.Close()
 	if err != nil {
-		return fmt.Errorf("Open failed: %s -  %w", pdfDoc.sourcePath, err)
+		return fmt.Errorf("Open failed: %s -  %w", pdfDoc.SourcePath, err)
 	}
-	var extractNumPages int
-	if options != nil && options.NumPages > 0 {
-		extractNumPages = options.NumPages
-	} else {
-		extractNumPages = 5
+	// Options items
+	startPage := 1
+	// DEBUG
+	//extractNumPages := 5
+	extractNumPages := r.NumPage()
+	if options != nil {
+		if options.StartPage > 1 {
+			startPage = options.StartPage
+		}
+
+		if options.NumPages > 0 {
+			extractNumPages = options.NumPages
+		}
 	}
 	// Fill up the Number of Pages in the struct
 	pdfDoc.NumPages = extractNumPages
 
-	for i := 1; i <= extractNumPages; i++ {
+	for i := startPage; i <= extractNumPages; i++ {
 		// init
 		pdfPage := PDFPage{}
 		pdfPage.PageNo = i

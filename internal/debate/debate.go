@@ -124,9 +124,9 @@ func (e ErrorNoTOCFound) Error() string {
 	return e.err
 }
 
-func NewDebateTOC(sourcePath string) (*DebateTOC, error) {
+func NewPDFDocForTOC(sourcePath string) (*PDFDocument, error) {
 	pdfDoc := PDFDocument{
-		sourcePath: sourcePath,
+		SourcePath: sourcePath,
 	}
 
 	// Example of options ..
@@ -137,9 +137,18 @@ func NewDebateTOC(sourcePath string) (*DebateTOC, error) {
 	if exerr != nil {
 		return nil, fmt.Errorf("extractPDF FAIL: %w", exerr)
 	}
+	return &pdfDoc, nil
+}
 
-	//litter.Dump(pdfDoc.Pages)
+func NewDebateTOC(sourcePath string) (*DebateTOC, error) {
+	pdfDoc, err := NewPDFDocForTOC(sourcePath)
+	if err != nil {
+		return nil, err
+	}
+	return NewDebateTOCPDFContent(pdfDoc)
+}
 
+func NewDebateTOCPDFContent(pdfDoc *PDFDocument) (*DebateTOC, error) {
 	foundTOC := false
 	// Look out for TOCs!
 	//if pdfDoc.NumPages > 1 {
@@ -192,7 +201,7 @@ func NewDebateTOC(sourcePath string) (*DebateTOC, error) {
 	}
 	if !foundTOC {
 		return nil, fmt.Errorf("NewDebateTOC FAIL: %w",
-			ErrorNoTOCFound{err: fmt.Sprintf("PDF at %s has NO TOC!", sourcePath)})
+			ErrorNoTOCFound{err: fmt.Sprintf("PDF at %s has NO TOC!", pdfDoc.SourcePath)})
 	}
 
 	// Extract lines only; sampling with the size

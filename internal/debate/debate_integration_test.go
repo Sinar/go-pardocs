@@ -86,29 +86,15 @@ func TestNewDebateTOC(t *testing.T) {
 	}
 }
 
-func TestRangeTOC(t *testing.T) {
-	type args struct {
-		pdfDoc *debate.PDFDocument
+// Helper function to load from fixture; safe/update as per necessary?
+func loadPDFFromFixture(sourcePath string) (*debate.PDFDocument, error) {
+
+	pdfDoc, err := debate.NewPDFDocForTOC(sourcePath)
+	if err != nil {
+		return nil, err
 	}
-	tests := []struct {
-		name          string
-		args          args
-		wantStartPage int
-		wantEndPage   int
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotStartPage, gotEndPage := debate.RangeTOC(tt.args.pdfDoc)
-			if gotStartPage != tt.wantStartPage {
-				t.Errorf("RangeTOC() gotStartPage = %v, want %v", gotStartPage, tt.wantStartPage)
-			}
-			if gotEndPage != tt.wantEndPage {
-				t.Errorf("RangeTOC() gotEndPage = %v, want %v", gotEndPage, tt.wantEndPage)
-			}
-		})
-	}
+
+	return pdfDoc, nil
 }
 
 // Helper function to get PDF raw content
