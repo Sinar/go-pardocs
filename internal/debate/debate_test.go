@@ -75,7 +75,7 @@ func Test_extractTOC(t *testing.T) {
 
 func Test_hasSessionDateHeader(t *testing.T) {
 	type args struct {
-		pageContent []string
+		rowContent string
 	}
 	tests := []struct {
 		name string
@@ -86,7 +86,7 @@ func Test_hasSessionDateHeader(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := hasSessionDateHeader(tt.args.pageContent); got != tt.want {
+			if got := hasSessionDateHeader(tt.args.rowContent); got != tt.want {
 				t.Errorf("hasSessionDateHeader() = %v, want %v", got, tt.want)
 			}
 		})

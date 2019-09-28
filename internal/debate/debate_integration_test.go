@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/sanity-io/litter"
@@ -17,24 +19,26 @@ import (
 )
 
 var update = flag.Bool("update", false, "update .golden files")
+var updatePDF = flag.Bool("updatePDF", false, "update .fixture PDFs")
 
 func TestNewDebateTOC(t *testing.T) {
 	type args struct {
-		sourcePath string
+		fixtureLabel string
+		sourcePath   string
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		//{"Missing TOC", args{"testdata/Bad-DR-DewanSelangor.pdf"}, nil, true},
-		{"empty page2", args{"testdata/DR-01072019.pdf"}, false},
-		{"normal #1", args{"testdata/DR-11042019.pdf"}, false},
-		{"normal #2", args{"testdata/DR-01072019_new.pdf"}, false},
+		{"Missing TOC", args{"TOC-Bad-DR-DewanSelangor", "testdata/Bad-DR-DewanSelangor.pdf"}, true},
+		{"TOC empty page2", args{"TOC-DR-01072019", "testdata/DR-01072019.pdf"}, false},
+		{"TOC normal #1", args{"TOC-DR-11042019", "testdata/DR-11042019.pdf"}, false},
+		{"TOC normal #2", args{"TOC-DR-01072019_new", "testdata/DR-01072019_new.pdf"}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := debate.NewDebateTOC(tt.args.sourcePath)
+			got, err := debate.NewDebateTOCPDFContent(loadPDFFromFixture(t, tt.args.fixtureLabel, tt.args.sourcePath))
 			// If unexpected errors!?
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewDebateTOC() error = %v, wantErr %v", err, tt.wantErr)
@@ -87,18 +91,40 @@ func TestNewDebateTOC(t *testing.T) {
 }
 
 // Helper function to load from fixture; safe/update as per necessary?
-func loadPDFFromFixture(sourcePath string) (*debate.PDFDocument, error) {
+func loadPDFFromFixture(t *testing.T, fixtureLabel string, sourcePath string) *debate.PDFDocument {
+	// Mark as helper
+	t.Helper()
 
-	pdfDoc, err := debate.NewPDFDocForTOC(sourcePath)
-	if err != nil {
-		return nil, err
+	var pdfDoc *debate.PDFDocument
+	// Read from cache; if not exist; complain that need to update
+	fixture := filepath.Join("testdata", fixtureLabel+".fixture")
+	if *updatePDF {
+		// If run update; call the same function used by TOC to get the data
+		pdfDoc, err := debate.NewPDFDocForTOC(sourcePath)
+		if err != nil {
+			t.Fatalf("NewPDFDocForTOC FAIL: %s", err.Error())
+		}
+		// Persist the data into the file
+		w, werr := yaml.Marshal(pdfDoc)
+		if werr != nil {
+			t.Fatalf("Marshal FAIl: %s", werr.Error())
+		}
+		ioutil.WriteFile(fixture, w, 0644)
+		return pdfDoc
 	}
-
-	return pdfDoc, nil
-}
-
-// Helper function to get PDF raw content
-func loadGoldenDebateTOC(sourcePath string) *debate.DebateTOC {
-	// Strip to baseline and load the .golden version
-	return nil
+	// Normal path,read from fixture ,..
+	want, rerr := ioutil.ReadFile(fixture)
+	if rerr != nil {
+		// Cannot proceed with one golden file update
+		if os.IsNotExist(rerr) {
+			t.Fatalf("Ensure run with -updatePDF flag first time! ERR: %s", rerr.Error())
+		}
+		t.Fatalf("Unexpected error: %s", rerr.Error())
+	}
+	pdfDoc = &debate.PDFDocument{}
+	umerr := yaml.Unmarshal(want, pdfDoc)
+	if umerr != nil {
+		t.Fatalf("Unmarshal FAIl: %s", umerr.Error())
+	}
+	return pdfDoc
 }

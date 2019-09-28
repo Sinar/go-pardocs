@@ -4,9 +4,16 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-
-	"github.com/sanity-io/litter"
 )
+
+type DebateSession struct {
+	SessionName   string
+	SessionDate   string
+	SessionMeta   SessionMeta
+	DebateTopics  []DebateTopic
+	OrderedEvents []Events
+	Attendees     []DebateAttendees
+}
 
 type DebateAttendees struct {
 	FullName     string
@@ -90,14 +97,6 @@ type SessionMeta struct {
 	SessionDay        SessionDay
 }
 
-type DebateSession struct {
-	SessionName   string
-	SessionDate   string
-	SessionMeta   SessionMeta
-	OrderedEvents []Events
-	Attendees     []DebateAttendees
-}
-
 type DebateTopic struct {
 	TopicName    string
 	PageNumStart int
@@ -122,6 +121,25 @@ type ErrorNoTOCFound struct {
 
 func (e ErrorNoTOCFound) Error() string {
 	return e.err
+}
+
+func NewDebateSession() {
+	// Combine SessionMeta + DebateTopics to form the initial DebateSession??
+
+}
+
+func NewSessionMeta() {
+	// from detected TOC; get the Session Metadata..
+
+}
+
+func NewDebateTopic() {
+	// from detected TOC; get the Topics ..
+	// Take a first cut naive for below ..
+	//TopicName    string
+	//PageNumStart int
+	//PageNumEnd   int
+
 }
 
 func NewPDFDocForTOC(sourcePath string) (*PDFDocument, error) {
@@ -165,6 +183,10 @@ func NewDebateTOCPDFContent(pdfDoc *PDFDocument) (*DebateTOC, error) {
 	for _, p := range pdfDoc.Pages {
 		for _, r := range p.PDFTxtSameLines {
 			// If detect DR header escape immediately!
+			if hasSessionDateHeader(r) {
+				break
+			}
+
 			pmatch, _ := regexp.MatchString(`PARLIMEN KE*`, r)
 			if pmatch {
 				// Debug
@@ -191,10 +213,11 @@ func NewDebateTOCPDFContent(pdfDoc *PDFDocument) (*DebateTOC, error) {
 	debateTOC.detectedTopics = detectedTopics
 	//spew.Dump(debateTOC)
 	// Private fields hidden by default!!
-	sq := litter.Options{
-		HidePrivateFields: false,
-	}
-	sq.Dump(debateTOC)
+	// DEBUG
+	//sq := litter.Options{
+	//	HidePrivateFields: false,
+	//}
+	//sq.Dump(debateTOC)
 
 	if len(debateTOC.detectedTopics) > 0 {
 		foundTOC = true
@@ -226,7 +249,7 @@ func normalizeSessionDate() error {
 	return nil
 }
 
-func hasSessionDateHeader(pageContent []string) bool {
+func hasSessionDateHeader(rowContent string) bool {
 	// Sample a low number of value from the  top ..
 	// Look for a regexp DR <date> <pageNum>
 	// If DebateTOC has a detected Session Date; use that to square things ..
