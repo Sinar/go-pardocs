@@ -143,27 +143,19 @@ func NewDebateTopic() {
 }
 
 func NewPDFDocForTOC(sourcePath string) (*PDFDocument, error) {
-	pdfDoc := PDFDocument{
-		SourcePath: sourcePath,
-	}
-
 	// Example of options ..
 	options := &ExtractPDFOptions{NumPages: MaxPDFSample}
 	//options := &ExtractPDFOptions{NumPages: 2}
 
+	// Process the PDFDocument ..
+	pdfDoc := PDFDocument{
+		SourcePath: sourcePath,
+	}
 	exerr := pdfDoc.extractPDF(options)
 	if exerr != nil {
 		return nil, fmt.Errorf("extractPDF FAIL: %w", exerr)
 	}
 	return &pdfDoc, nil
-}
-
-func NewDebateTOC(sourcePath string) (*DebateTOC, error) {
-	pdfDoc, err := NewPDFDocForTOC(sourcePath)
-	if err != nil {
-		return nil, err
-	}
-	return NewDebateTOCPDFContent(pdfDoc)
 }
 
 func NewDebateTOCPDFContent(pdfDoc *PDFDocument) (*DebateTOC, error) {
@@ -230,6 +222,14 @@ func NewDebateTOCPDFContent(pdfDoc *PDFDocument) (*DebateTOC, error) {
 	// Extract lines only; sampling with the size
 	// 	as per in MaxPDFSample; look out for the Header page ..
 	return &debateTOC, nil
+}
+
+func NewDebateTOC(sourcePath string) (*DebateTOC, error) {
+	pdfDoc, err := NewPDFDocForTOC(sourcePath)
+	if err != nil {
+		return nil, err
+	}
+	return NewDebateTOCPDFContent(pdfDoc)
 }
 
 func extractTOC(samplePages []PDFPage, debateTOC *DebateTOC) error {
