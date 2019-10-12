@@ -1,0 +1,16 @@
+&debate.DebateTOC{
+  detectedSessionName: "PARLIMEN KEEMPAT BELAS",
+  detectedSessionDate: "pada Sabtu, 11 Mei 2019 yang lalu. [Tepuk] Dewan Rakyat ini mempunyai kedudukan ",
+  normalizedSessionDate: "",
+  detectedTopics: []string{
+    " - Yang Berhormat Cik Vivian Wong Shir Yee (Sandakan) (Halaman      1) ",
+    "  - Mengalu-alukan Ahli Baru (Halaman      1) ",
+    " - Memperkenankan Akta-akta (Halaman      2) ",
+    " - Perutusan Daripada Dewan Negara (Halaman      2) ",
+    " RI’AYATUDDIN AL�-MUADZAM SHAH  (Halaman      3) ",
+    "JAWAPAN-JAWAPAN LISAN BAGI PERTANYAAN-PERTANYAAN (Halaman      4) ",
+    "RANG UNDANG-UNDANG DIBAWA KE DALAM MESYUARAT  (Halaman    42) ",
+    "  Peraturan Mesyuarat (Halaman    43) ",
+    "  ■ �Pengisytiharan Harta Semua Ahli Dewan Rakyat (Halaman    43) ",
+  },
+}

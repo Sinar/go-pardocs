@@ -119,7 +119,6 @@ func (p *planCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 	// Detect the cover page and suggest label names?
 
 	parDoc := pardocs.ParliamentDocs{conf}
-	// Execute the plan .. should catch errors  with xerrors :P
 	parDoc.Plan()
 	// Print out the location of the plan to be reviewed?
 	// Suggest any changes; automatic anomaly checks? strange odds rule; not in order?
@@ -209,7 +208,6 @@ func (p *splitCmd) Execute(_ context.Context, f *flag.FlagSet, args ...interface
 	//spew.Dump(conf)
 
 	parDoc := pardocs.ParliamentDocs{conf}
-	// Execute the plan .. should catch errors  with xerrors :P
 	parDoc.Split()
 	// TODO: Handle errors?
 

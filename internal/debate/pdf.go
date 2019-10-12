@@ -1,4 +1,4 @@
-package hansard
+package debate
 
 import (
 	"fmt"
@@ -12,7 +12,6 @@ import (
 
 type PDFPage struct {
 	PageNo           int
-	PDFPlainText     string
 	PDFTxtSameLines  []string // combined content with same line .. proxy for changes
 	PDFTxtSameStyles []string // combined content with same style .. proxy for changes
 }
@@ -20,29 +19,161 @@ type PDFPage struct {
 type PDFDocument struct {
 	NumPages   int
 	Pages      []PDFPage
-	sourcePath string
+	SourcePath string
+}
+
+type ExtractPDFOptions struct {
+	StartPage int
+	NumPages  int
 }
 
 const (
-	MaxLineProcessed = 7
+	MaxLineProcessed = 100
 )
 
-func NewPDFDoc(sourcePath string) (*PDFDocument, error) {
+func NewPDFDoc(sourcePath string, options *ExtractPDFOptions) (*PDFDocument, error) {
 	// TODO: Guard checks to ensure file exists?? etc.
 	// and is readbale??
 
 	pdfDoc := PDFDocument{
-		sourcePath: sourcePath,
+		SourcePath: sourcePath,
 	}
 
-	exerr := pdfDoc.extractPDF()
+	// Example of options ..
+	//if options == nil {
+	//	options = &ExtractPDFOptions{}
+	//}
+	// DEBUG
+	//options = &ExtractPDFOptions{NumPages: 5}
+
+	exerr := pdfDoc.extractPDFLinesOnly(options)
 	if exerr != nil {
 		return nil, exerr
 	}
 	return &pdfDoc, nil
 
 }
-func (pdfDoc *PDFDocument) extractPDF() error {
+
+func (pdfDoc *PDFDocument) loadPDFContent() error {
+	// Method implement; can load from fixture or actual file?
+	return nil
+}
+
+func (pdfDoc *PDFDocument) extractPDFStylesOnly(options *ExtractPDFOptions) error {
+	fmt.Println("In extractPDFStylesOnly ...")
+
+	var pdfPages []PDFPage
+	// Example form PR + comments --> https://github.com/rsc/pdf/pull/21/files?short_path=04c6e90#diff-04c6e90faac2675aa89e2176d2eec7d8
+	f, r, err := pdf.Open(pdfDoc.SourcePath)
+	defer f.Close()
+	if err != nil {
+		return fmt.Errorf("Open failed: %s -  %w", pdfDoc.SourcePath, err)
+	}
+	// Options items
+	startPage := 1
+	extractNumPages := r.NumPage()
+	if options != nil {
+		if options.StartPage > 1 {
+			startPage = options.StartPage
+		}
+
+		if options.NumPages > 0 {
+			extractNumPages = options.NumPages
+		}
+	}
+	// Fill up the Number of Pages in the struct
+	pdfDoc.NumPages = extractNumPages
+	for i := startPage; i <= extractNumPages; i++ {
+		// init
+		pdfPage := PDFPage{}
+		pdfPage.PageNo = i
+
+		// Get details for the page
+		p := r.Page(i)
+		if p.V.IsNull() {
+			continue
+		}
+		pt, pterr := p.GetPlainText(nil)
+		if pterr != nil {
+			if pterr.Error() == "malformed PDF: reading at offset 0: stream not present" {
+				fmt.Println("**WILL IGNORE!!!! *****")
+				continue
+			}
+			return fmt.Errorf(" GetPlainText ERROR: %w", pt)
+		}
+
+		// Top 10
+		//fmt.Println("== START ANALYZE by STYLE")
+		pdfPage.PDFTxtSameStyles = make([]string, 0, 20)
+		extractTxtSameStyles(&pdfPage.PDFTxtSameStyles, p.Content().Text)
+		//fmt.Println("== END ANALYZE by STYLE")
+
+		pdfPages = append(pdfPages, pdfPage)
+	}
+
+	pdfDoc.Pages = pdfPages
+
+	return nil
+}
+
+func (pdfDoc *PDFDocument) extractPDFLinesOnly(options *ExtractPDFOptions) error {
+	fmt.Println("In extractPDFLinesOnly ...")
+
+	var pdfPages []PDFPage
+
+	// Example form PR + comments --> https://github.com/rsc/pdf/pull/21/files?short_path=04c6e90#diff-04c6e90faac2675aa89e2176d2eec7d8
+	f, r, err := pdf.Open(pdfDoc.SourcePath)
+	defer f.Close()
+	if err != nil {
+		return fmt.Errorf("Open failed: %s -  %w", pdfDoc.SourcePath, err)
+	}
+	// Options items
+	startPage := 1
+	extractNumPages := r.NumPage()
+	if options != nil {
+		if options.StartPage > 1 {
+			startPage = options.StartPage
+		}
+
+		if options.NumPages > 0 {
+			extractNumPages = options.NumPages
+		}
+	}
+	// Fill up the Number of Pages in the struct
+	pdfDoc.NumPages = extractNumPages
+	for i := startPage; i <= extractNumPages; i++ {
+		// init
+		pdfPage := PDFPage{}
+		pdfPage.PageNo = i
+
+		// Get details for the page
+		p := r.Page(i)
+		if p.V.IsNull() {
+			continue
+		}
+		pt, pterr := p.GetPlainText(nil)
+		if pterr != nil {
+			if pterr.Error() == "malformed PDF: reading at offset 0: stream not present" {
+				fmt.Println("**WILL IGNORE!!!! *****")
+				continue
+			}
+			return fmt.Errorf(" GetPlainText ERROR: %w", pt)
+		}
+
+		// Top 10 lines for this page by line analysis
+		//fmt.Println("== START ANALYZE by LINE")
+		pdfPage.PDFTxtSameLines = make([]string, 0, 20)
+		extractTxtSameLine(&pdfPage.PDFTxtSameLines, p.Content().Text)
+
+		pdfPages = append(pdfPages, pdfPage)
+	}
+
+	pdfDoc.Pages = pdfPages
+
+	return nil
+}
+
+func (pdfDoc *PDFDocument) extractPDF(options *ExtractPDFOptions) error {
 	fmt.Println("In ExtractPDF ...")
 
 	// Guard functions here ..
@@ -53,16 +184,29 @@ func (pdfDoc *PDFDocument) extractPDF() error {
 	var pdfPages []PDFPage
 
 	// Example form PR + comments --> https://github.com/rsc/pdf/pull/21/files?short_path=04c6e90#diff-04c6e90faac2675aa89e2176d2eec7d8
-	f, r, err := pdf.Open(pdfDoc.sourcePath)
+	f, r, err := pdf.Open(pdfDoc.SourcePath)
 	defer f.Close()
 	if err != nil {
-		return fmt.Errorf("Open failed: %s -  %w", pdfDoc.sourcePath, err)
+		return fmt.Errorf("Open failed: %s -  %w", pdfDoc.SourcePath, err)
 	}
-	// iterate through all the pages one by one
-	pdfDoc.NumPages = r.NumPage()
+	// Options items
+	startPage := 1
 	// DEBUG
-	//pdfDoc.NumPages = 7
-	for i := 1; i <= pdfDoc.NumPages; i++ {
+	//extractNumPages := 5
+	extractNumPages := r.NumPage()
+	if options != nil {
+		if options.StartPage > 1 {
+			startPage = options.StartPage
+		}
+
+		if options.NumPages > 0 {
+			extractNumPages = options.NumPages
+		}
+	}
+	// Fill up the Number of Pages in the struct
+	pdfDoc.NumPages = extractNumPages
+
+	for i := startPage; i <= extractNumPages; i++ {
 		// init
 		pdfPage := PDFPage{}
 		pdfPage.PageNo = i
@@ -81,7 +225,8 @@ func (pdfDoc *PDFDocument) extractPDF() error {
 			}
 			return fmt.Errorf(" GetPlainText ERROR: %w", pt)
 		}
-		pdfPage.PDFPlainText = pt
+		// NO need this ,.
+		//pdfPage.PDFPlainText = pt
 		// processStyleChanges ..
 		//extractTxtSameStyles()
 		// DEBUG
@@ -236,4 +381,12 @@ func extractTxtSameStyles(ptrTxtSameStyles *[]string, pdfContentTxt []pdf.Text) 
 	//spew.Dump(ptrTxtSameStyles)
 
 	return nil
+}
+
+func RangeTOC(pdfDoc *PDFDocument) (startPage int, endPage int) {
+	startPage = 0
+	endPage = 0
+
+	// Do some calculations here ..
+	return startPage, endPage
 }
