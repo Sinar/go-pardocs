@@ -1,0 +1,273 @@
+
+* Buzz corner 
+
+* Hard things in computer science; how to name your scenaios?
+
+:emoji: shrug .. :man_shrugging :woman_shrugging :woman_shrugging:
+
+can run test match pattern -run .*/happy.*
+
+* Test public interface for API; you'll maintain!
+
+* Use _test for private function/method; use integration_test for APIs that are public (within or without package) ..
+
+* Use internal to hide APIs while evovling
+
+* Use testdata for Fixtures, Golden image
+
+* Test cases; table
+
+It  uses t.Run; probably avoid t,.Parallel?
+
+* Golden image, fixture patterns
+
+Use update flag to persist and "eyeball" it!
+
+* Use t.Helper for more accuracy
+
+Without
+```
+// Helper function to sample 5 pages from fixture
+func samplePDFFromFixture(t *testing.T, fixtureLabel string, sourcePath string) *hansard.PDFDocument {
+	// Mark as helper
+	//t.Helper()
+
+<-- fail here Line 99
+
+=== RUN   TestNewHansardQuestions/case_#1
+    --- FAIL: TestNewHansardQuestions/case_#1 (0.00s)
+        hansard_integration_test.go:99: die!
+
+```
+With (at the  calling function, NOT in helper)
+```
+=== RUN   TestNewHansardQuestions/case_#1
+    --- FAIL: TestNewHansardQuestions/case_#1 (0.00s)
+        hansard_integration_test.go:40: die!
+
+```
+
+* Compare with go-cmp
+
+```
+ === RUN   TestNewHansardQuestions/sad_#2
+...
+    --- FAIL: TestNewHansardQuestions/sad_#2 (0.00s)
+        hansard_integration_test.go:43: NewHansardQuestions() error = <nil>, wantErr true
+        hansard_integration_test.go:48: hansardQuestions mismatch (-want +got):
+              (*[]hansard.HansardQuestion)(
+            - 	nil,
+            + 	&{
+            + 		{QuestionNum: "1", PageNumStart: 1, PageNumEnd: 1},
+            + 		{QuestionNum: "2", PageNumStart: 2, PageNumEnd: 2},
+            + 	},
+              )
+
+```
+
+* Fixture test; boil down PDFs into YAML
+
+Use a descriptive label; where original data is; use Makefile to download original??
+
+```
+func TestNewDebateTOC(t *testing.T) {
+	type args struct {
+		fixtureLabel string
+		sourcePath   string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{"Missing TOC", args{"TOC-Bad-DR-DewanSelangor", "testdata/Bad-DR-DewanSelangor.pdf"}, true},
+		{"TOC empty page2", args{"TOC-DR-01072019", "testdata/DR-01072019.pdf"}, false},
+		{"TOC normal #1", args{"TOC-DR-11042019", "testdata/DR-11042019.pdf"}, false},
+		{"TOC normal #2", args{"TOC-DR-01072019_new", "testdata/DR-01072019_new.pdf"}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := debate.NewDebateTOCPDFContent(loadPDFFromFixture(t, tt.args.fixtureLabel, tt.args.sourcePath))
+...
+
+```
+
+* Fixture as YAML (there is a use!)
+
+```yaml
+numpages: 3
+pages:
+- pageno: 1
+  pdftxtsamelines:
+  - 'Naskhah belum disemak '
+  - 'PARLIMEN KEEMPAT BELAS '
+  - 'PENGGAL KEDUA '
+...
+  pdftxtsamestyles:
+...
+  - '[Tepuk]'
+  - ' Dewan Rakyat ini mempunyai kedudukan yang tertinggi dalam menentukan undang-undang
+    negara dengan bertujuan memberikan manfaat terbesar kepada seluruh rakyat Malaysia.
+    Ia mempunyai wibawanya sendiri dan melengkapkan cabang-cabang pemerintahan yang
+    lain. Justeru, peranan Parlimen sebagai medan perbahasan dan perdebatan yang bebas
+    mesti dihayati sebaiknya. Saya yakin, Ahli Yang Berhormat akan melaksanakan tugas
+    sebagai wakil rakyat ini dengan terhormat seperti yang dituntut oleh keluhuran
+    institusi ini. '
+sourcepath: testdata/DR-01072019.pdf
+
+```
+
+* Why YAML; what did i try else?
+
+Dimple
+Sturcute; you don;t have to worry about the weird YAML stuff (hopefully libs handle)
+Easy to diff with go-cmp once it is in struct
+Tried;  but  hard to show diff ..
+
+* Run test by matching patterns; case below crosses unit + integration
+
+```
+$ gotest -v -run Question/sad ./...
+=== RUN   Test_isStartOfQuestionSection
+=== RUN   Test_isStartOfQuestionSection/sad_#1
+=== RUN   Test_isStartOfQuestionSection/sad_#2
+=== RUN   Test_extractQuestionNum
+=== RUN   Test_extractQuestionNum/sad_#1
+=== RUN   Test_extractQuestionNum/sad_#2
+=== RUN   TestNewHansardQuestions
+=== RUN   TestNewHansardQuestions/sad_#1
+=== RUN   TestNewHansardQuestions/sad_#2
+
+```
+
+Read More
+
+* Make the cases readbale; rearrange stuff:
+
+```
+...
+		{"case #3", args{
+			"HDOC-BukanLisan-1-20", "raw/BukanLisan/1 - 20.pdf",
+			&[]hansard.HansardQuestion{
+				{"1", 1, 1},
+				{"2", 2, 2},
+				{"3", 3, 5},
+			},
+		}, false},
+		{"sad #1", args{
+			"Bad-HDOC-Lisan-1-20", "raw/Lisan/SOALAN MULUT (1-20).pdfa",
+			&[]hansard.HansardQuestion{
+				{"8", 11, 12},
+				{"9", 29, 30},
+				{"5", 32, 33},
+				{"6", 11, 12},
+				{"10", 29, 30},
+				{"10", 32, 33},
+				{"15", 11, 12},
+				{"19", 37, 37},
+				{"0", 38, 39},
+			},
+		}, true},
+		// We expect QuestionNum of "0" for pages with some marker but could NOT recognize question number!
+		{"sad #2", args{
+			"Bad-HDOC-BukanLisan-1-20", "raw/BukanLisan/1 - 20b.pdf",
+			&[]hansard.HansardQuestion{
+				{"0", 11, 12},
+				{"0", 29, 30},
+				{"0", 32, 33},
+			},
+		}, true,
+		},
+..
+```
+
+Output:
+```
+$ gotest -v -run NewHansardQuestions/sad ./...
+=== RUN   TestNewHansardQuestions
+=== RUN   TestNewHansardQuestions/sad_#1
+=== RUN   TestNewHansardQuestions/sad_#2
+--- FAIL: TestNewHansardQuestions (0.00s)
+    --- FAIL: TestNewHansardQuestions/sad_#1 (0.00s)
+        hansard_integration_test.go:77: NewHansardQuestions() error = <nil>, wantErr true
+        hansard_integration_test.go:82: hansardQuestions mismatch (-want +got):
+              &[]hansard.HansardQuestion{
+                {
+                        QuestionNum:  "8",
+            -           PageNumStart: 11,
+            +           PageNumStart: 18,
+            -           PageNumEnd:   12,
+            +           PageNumEnd:   18,
+                },
+                {
+                        QuestionNum:  "9",
+            -           PageNumStart: 29,
+            +           PageNumStart: 19,
+            -           PageNumEnd:   30,
+            +           PageNumEnd:   11,
+                },
+...
+                {
+                        QuestionNum:  "15",
+            -           PageNumStart: 11,
+            +           PageNumStart: 30,
+            -           PageNumEnd:   12,
+            +           PageNumEnd:   36,
+                },
+                {QuestionNum: "19", PageNumStart: 37, PageNumEnd: 37},
+                {QuestionNum: "0", PageNumStart: 38, PageNumEnd: 39},
+              }
+    --- FAIL: TestNewHansardQuestions/sad_#2 (0.00s)
+        hansard_integration_test.go:77: NewHansardQuestions() error = <nil>, wantErr true
+FAIL
+FAIL    github.com/Sinar/go-dundocs/internal/hansard    0.012s
+FAIL
+
+```
+
+*  Custom Error (test new xerrors)
+
+Code:
+```
+	// If have badQuestionsCount; flag it; NOT fatal; but to be handled by caller
+	if badQuestionsCount > 0 {
+		return fmt.Errorf("NewHansardQuestions FAIL: %w", ErrorQuestionsHasInvalid{badQuestionsCount})
+	}
+
+```
+
+Handler:
+```
+			//  For errors; check out Error Type to see if it is  recoverable
+			if err != nil {
+				// Below does not work; apparently is not expression -> hansard.ErrorQuestionsHasInvalid. Why?
+				//if errors.Is(err, hansard.ErrorQuestionsHasInvalid) {
+				//	t.Errorf("ERR: %v", err)
+				//}
+				errQInvalid, ok := errors.Unwrap(err).(hansard.ErrorQuestionsHasInvalid)
+				if ok {
+					fmt.Println("RECOVERABLE: ", errQInvalid.Error())
+				} else {
+					// Is more serious error?
+				}
+			}
+
+```
+
+Output:
+```
+```
+
+* TestMain
+    -  can setup [see 1 below](1)
+    
+* Short Test
+    - testing.Short()
+    
+* Examples
+    - ExmapleXYZ    
+
+Moar Testing Resources
+- [1] https://www.calhoun.io/how-to-test-with-go/
+
+[2] https://github.com/rakyll/gotest  - Fancy go test (with moar colors!!)
