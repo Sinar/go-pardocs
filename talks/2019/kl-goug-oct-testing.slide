@@ -5,9 +5,13 @@ Tags: go, golang
 Michael Leow
 FOI Initiatives, Sinar Project
 leow@sinarproject.org
-https://www.sinarproject.org/
 @leowmjw
-https://github.com/Sinar/go-pardocs
+
+https://talks.godoc.org/github.com/klrkdekira/golang-talks/2019/september/main.slide#1 [PREZ]
+
+https://github.com/Sinar/go-dundocs [CODE]
+
+https://www.sinarproject.org/
 
 * Agenda
 
@@ -15,6 +19,7 @@ https://github.com/Sinar/go-pardocs
 - What is a Hansard?
 - What is ParDocs?
 - What is Selangor State Assembly?
+- Strategy to plan + split document
 - What is OSCv3?
 - Advanced: Camelot + Excalibur
 - Concepts
@@ -57,6 +62,49 @@ https://github.com/Sinar/go-pardocs
 
 .image assets/selangor-state-dewan.png
 
+* What is State Assembly Hansard?
+
+Have Spoken + Written
+
+Question is embedded into  document
+
+Howerver, we also can have auto detect of type
+
+* Strategy for Splitting
+
+- PDF Phase
+- Plan Phase
+- Split Phase
+
+.image assets/go-dundocs-strategy-big.png
+
+
+* Testing in old days (PHP)
+
+- 
+- Delve sanyone?
+- Println .. Still do ...
+
+* Patterns Tried
+
+- Use go-cmp!
+- Structure in code
+- Utilize built in test capabilities
+
+* Structure in Code
+
+.image assets/go-dundocs-code-structure.png
+
+: Talk about the 
+: Use of test data
+
+* How Test Help in PDF Phase
+Helped catch change in PDF library version
+
+
+* How Test Help in Plan Phase
+
+* How Test Help in Split Phase
 
 * Hard things in computer science; how to name your scenaios?
 
@@ -341,3 +389,6 @@ Moar Testing Resources
 - [1] https://www.calhoun.io/how-to-test-with-go/
 
 [2] https://github.com/rakyll/gotest  - Fancy go test (with moar colors!!)
+
+[3] learn go with test 
+
