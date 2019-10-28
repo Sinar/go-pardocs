@@ -4,10 +4,11 @@ Tags: go, golang
 
 Michael Leow
 FOI Initiatives, Sinar Project
+
 leow@sinarproject.org
 @leowmjw
 
-https://talks.godoc.org/github.com/klrkdekira/golang-talks/2019/september/main.slide#1 [PREZ]
+https://talks.godoc.org/github.com/sinar/go-pardocs/talks/2019/kl-goug-oct-testing.slide [PREZ]
 
 https://github.com/Sinar/go-dundocs [CODE]
 
@@ -32,23 +33,11 @@ https://www.sinarproject.org/
 
 .caption _StarWars-Gopher_ by [[https://github.com/ashleymcnamara/gophers/blob/master/GOPHER_STAR_WARS.png][Ashley McNamara]]
 
+* What is DUNDocs?
 
-* What is a Hansard?
-
-- Previous: Only Spoken Questions are available online [[https://www.parlimen.gov.my/][Parliment]]
-- Previous: OKM minions needed to scan book of Written Answers 
-- Now: Written answers can be downloaded + Quality seems better (direct)
-
-.image assets/parlimen-gov-my.png
-
-: Hansard is the official record; inherited from the British
-: We had cases of pencil / pen marks to override numbering; not do clean
-: New Government - New document! - Old site :(
-
-* What is  ParDocs? [[ https://pardocs.sinarproject.org ]]
-
-- Originally written in Java, used iText library - [[https://github.com/leowmjw/parliamentMY-QA-blast][parliamentMY-QA-blast]]
-- Lots of Regexp; fragile, 80% success rate
+- DUN - Dewan Undangan Negeri (State Assembly)
+- Empower the tx payer to have Open Data what rep ask on your behalf
+- Objective: SPlit by Type, Questions and make it searchble (see PaRDOCS)
 
 .image assets/pardocs.png
 
@@ -59,8 +48,22 @@ https://www.sinarproject.org/
 * What is Selangor State Assembly? [[ https://dewan.selangor.gov.my ]]
 
 - Laws under the state purview are discussed/passed
+- : Forestyr, Local Authorirties, Religion, License, Sand, Mineral.
+- Lots of docs; not as powerful as Federal,
 
 .image assets/selangor-state-dewan.png
+
+* What is a Hansard?
+
+- Previous: Only Spoken Questions are available online [[https://www.parlimen.gov.my/][Parliment]]
+- Previous: OKM minions needed to scan book of Written Answers
+- Now: Written answers can be downloaded + Quality seems better (direct)
+
+.image assets/parlimen-gov-my.png
+
+: Hansard is the official record; inherited from the British
+: We had cases of pencil / pen marks to override numbering; not do clean
+: New Government - New document! - Old site :(
 
 * What is State Assembly Hansard?
 
@@ -81,30 +84,177 @@ Howerver, we also can have auto detect of type
 
 * Testing in old days (PHP)
 
-- 
+- Started by wrting outside in; CLI; now reverse
 - Delve sanyone?
 - Println .. Still do ...
+- CLI one way to interface (e.g. REST, gRPC, message pidgeon)
 
-* Patterns Tried
+: CLI can be left last; as it is just one way to interface
+: Can use
+: REST server might be abnother way to interact; should not matter
+
+* Testing Patterns Tried
 
 - Use go-cmp!
 - Structure in code
-- Utilize built in test capabilities
+- Utilize built-in test capabilities
+
+* go-cmp Is Awesome!
+
+Any structure will do!
+
+			if diff := cmp.Diff(tt.args.hansardQuestions, &hansardQuestions); diff != "" {
+				t.Errorf("hansardQuestions mismatch (-want +got):\n%s", diff)
+			}
+
+
+Human-readable output:
+
+            === RUN   TestNewHansardQuestions/sad_#2
+                --- FAIL: TestNewHansardQuestions/sad_#2 (0.00s)
+            {
+                            QuestionNum:  "15",
+                -           PageNumStart: 11,
+                +           PageNumStart: 30,
+                -           PageNumEnd:   12,
+                +           PageNumEnd:   36,
+            },
+                    {QuestionNum: "19", PageNumStart: 37, PageNumEnd: 37},
+                    {QuestionNum: "0", PageNumStart: 38, PageNumEnd: 39},
+            }
+            hansard_integration_test.go:77: NewHansardQuestions() error = <nil>, wantErr true
+            FAIL    github.com/Sinar/go-dundocs/internal/hansard    0.012s
+
 
 * Structure in Code
 
+Safely hide internal APIs while discovery phase
+
 .image assets/go-dundocs-code-structure.png
 
-: Talk about the 
+: Can safely hide while still designing public APIs
+: Only top-level outside internal is exposed
+: Talk about the use if internal
 : Use of test data
+
+
+* Built-in Test Capabilities
+
+- Use <package>_test for pure unit test
+- Use <package>_integration_test expose Behavior (e.g. hansard_integration_test)
+- Use the testdata folder (not examined)
+- Use Helper functions
+
+: Unit test in _test
+: Start by writing the behavior via the _integration_test pattern
+: Structure the test knowing relative to the test is testdata folder
+: helper functions ensure no extra noise
+
+* Built-in: Helper function
+Use t.Helper for more accuracy
+
+Without:
+
+    // Helper function to sample 5 pages from fixture
+    func samplePDFFromFixture(t *testing.T, fixtureLabel string, sourcePath string) *hansard.PDFDocument {
+        // Mark as helper
+        //t.Helper()
+        <-- fail here Line 99
+
+    === RUN   TestNewHansardQuestions/case_#1
+        --- FAIL: TestNewHansardQuestions/case_#1 (0.00s)
+            hansard_integration_test.go:99: die!
+
+With (at the  calling function, NOT in helper):
+
+    === RUN   TestNewHansardQuestions/case_#1
+        --- FAIL: TestNewHansardQuestions/case_#1 (0.00s)
+            hansard_integration_test.go:40: die!
 
 * How Test Help in PDF Phase
 Helped catch change in PDF library version
 
+: Tried a different method + libraries
+: Does not come out correctly
+: Match against golden image
+
+* Fixture as YAML (there is a use!)
+
+YAML:
+
+    numpages: 3
+    pages:
+    - pageno: 1
+      pdftxtsamelines:
+      - 'Naskhah belum disemak '
+      - 'PARLIMEN KEEMPAT BELAS '
+      - 'PENGGAL KEDUA '
+      ...
+      pdftxtsamestyles:
+      ...
+      - '[Tepuk]'
+      - ' Dewan Rakyat ini mempunyai kedudukan yang tertinggi dalam menentukan undang-undang
+        negara dengan bertujuan memberikan manfaat terbesar kepada seluruh rakyat Malaysia.
+        Ia mempunyai wibawanya sendiri dan melengkapkan cabang-cabang pemerintahan yang
+        lain. Justeru, peranan Parlimen sebagai medan perbahasan dan perdebatan yang bebas
+        mesti dihayati sebaiknya. Saya yakin, Ahli Yang Berhormat akan melaksanakan tugas
+        sebagai wakil rakyat ini dengan terhormat seperti yang dituntut oleh keluhuran
+        institusi ini. '
+    sourcepath: testdata/DR-01072019.pdf
 
 * How Test Help in Plan Phase
 
+* Technique: Table-testing
+Able to invent weird scenarios otherwise not easily done:
+
+		{"case #3", args{
+			"HDOC-BukanLisan-1-20", "raw/BukanLisan/1 - 20.pdf", &[]hansard.HansardQuestion{
+				{"1", 1, 1},
+				{"2", 2, 2},
+				{"3", 3, 5},
+		    },
+		}, false},
+		{"sad #1", args{
+			"Bad-HDOC-Lisan-1-20", "raw/Lisan/SOALAN MULUT (1-20).pdfa", &[]hansard.HansardQuestion{
+				{"8", 11, 12},
+				{"9", 29, 30},
+				{"5", 32, 33},
+				{"6", 11, 12},
+				{"10", 29, 30},
+				{"10", 32, 33},
+				{"15", 11, 12},
+				{"19", 37, 37},
+				{"0", 38, 39},
+			},
+		}, true},
+
+* Technique: Table-testing (Part 2)
+
+Output:
+
+    $ gotest -v -run NewHansardQuestions/sad ./...
+    --- FAIL: TestNewHansardQuestions (0.00s)
+            hansard_integration_test.go:82: hansardQuestions mismatch (-want +got):
+                  &[]hansard.HansardQuestion{
+                    {
+                            QuestionNum:  "8",
+                -           PageNumStart: 11,
+                +           PageNumStart: 18,
+                -           PageNumEnd:   12,
+                +           PageNumEnd:   18,
+                    },
+                    {
+                            QuestionNum:  "9",
+                -           PageNumStart: 29,
+                +           PageNumStart: 19,
+                -           PageNumEnd:   30,
+                +           PageNumEnd:   11,
+                    },
+        --- FAIL: TestNewHansardQuestions/sad_#2 (0.00s)
+
 * How Test Help in Split Phase
+Can have weird plans
+Can habdle reported casse of pardocs; filenames with '.' in it
 
 * Hard things in computer science; how to name your scenaios?
 
@@ -128,47 +278,6 @@ It  uses t.Run; probably avoid t,.Parallel?
 
 Use update flag to persist and "eyeball" it!
 
-* Use t.Helper for more accuracy
-
-Without
-```
-// Helper function to sample 5 pages from fixture
-func samplePDFFromFixture(t *testing.T, fixtureLabel string, sourcePath string) *hansard.PDFDocument {
-	// Mark as helper
-	//t.Helper()
-
-<-- fail here Line 99
-
-=== RUN   TestNewHansardQuestions/case_#1
-    --- FAIL: TestNewHansardQuestions/case_#1 (0.00s)
-        hansard_integration_test.go:99: die!
-
-```
-With (at the  calling function, NOT in helper)
-```
-=== RUN   TestNewHansardQuestions/case_#1
-    --- FAIL: TestNewHansardQuestions/case_#1 (0.00s)
-        hansard_integration_test.go:40: die!
-
-```
-
-* Compare with go-cmp
-
-```
- === RUN   TestNewHansardQuestions/sad_#2
-    ...
-    --- FAIL: TestNewHansardQuestions/sad_#2 (0.00s)
-        hansard_integration_test.go:43: NewHansardQuestions() error = <nil>, wantErr true
-        hansard_integration_test.go:48: hansardQuestions mismatch (-want +got):
-              (*[]hansard.HansardQuestion)(
-            - 	nil,
-            + 	&{
-            + 		{QuestionNum: "1", PageNumStart: 1, PageNumEnd: 1},
-            + 		{QuestionNum: "2", PageNumStart: 2, PageNumEnd: 2},
-            + 	},
-              )
-
-```
 
 * Fixture test; boil down PDFs into YAML
 
@@ -197,30 +306,6 @@ func TestNewDebateTOC(t *testing.T) {
 
 ```
 
-* Fixture as YAML (there is a use!)
-
-```yaml
-numpages: 3
-pages:
-- pageno: 1
-  pdftxtsamelines:
-  - 'Naskhah belum disemak '
-  - 'PARLIMEN KEEMPAT BELAS '
-  - 'PENGGAL KEDUA '
-  ...
-  pdftxtsamestyles:
-  ...
-  - '[Tepuk]'
-  - ' Dewan Rakyat ini mempunyai kedudukan yang tertinggi dalam menentukan undang-undang
-    negara dengan bertujuan memberikan manfaat terbesar kepada seluruh rakyat Malaysia.
-    Ia mempunyai wibawanya sendiri dan melengkapkan cabang-cabang pemerintahan yang
-    lain. Justeru, peranan Parlimen sebagai medan perbahasan dan perdebatan yang bebas
-    mesti dihayati sebaiknya. Saya yakin, Ahli Yang Berhormat akan melaksanakan tugas
-    sebagai wakil rakyat ini dengan terhormat seperti yang dituntut oleh keluhuran
-    institusi ini. '
-sourcepath: testdata/DR-01072019.pdf
-
-```
 
 * Why YAML; what did i try else?
 
@@ -247,88 +332,7 @@ $ gotest -v -run Question/sad ./...
 
 Read More
 
-* Make the cases readbale; rearrange stuff:
 
-```
-    ...
-		{"case #3", args{
-			"HDOC-BukanLisan-1-20", "raw/BukanLisan/1 - 20.pdf",
-			&[]hansard.HansardQuestion{
-				{"1", 1, 1},
-				{"2", 2, 2},
-				{"3", 3, 5},
-			},
-		}, false},
-		{"sad #1", args{
-			"Bad-HDOC-Lisan-1-20", "raw/Lisan/SOALAN MULUT (1-20).pdfa",
-			&[]hansard.HansardQuestion{
-				{"8", 11, 12},
-				{"9", 29, 30},
-				{"5", 32, 33},
-				{"6", 11, 12},
-				{"10", 29, 30},
-				{"10", 32, 33},
-				{"15", 11, 12},
-				{"19", 37, 37},
-				{"0", 38, 39},
-			},
-		}, true},
-		// We expect QuestionNum of "0" for pages with some marker but could NOT recognize question number!
-		{"sad #2", args{
-			"Bad-HDOC-BukanLisan-1-20", "raw/BukanLisan/1 - 20b.pdf",
-			&[]hansard.HansardQuestion{
-				{"0", 11, 12},
-				{"0", 29, 30},
-				{"0", 32, 33},
-			},
-		}, true,
-		},
-    ...
-```
-
-Output:
-```
-$ gotest -v -run NewHansardQuestions/sad ./...
-=== RUN   TestNewHansardQuestions
-=== RUN   TestNewHansardQuestions/sad_#1
-=== RUN   TestNewHansardQuestions/sad_#2
---- FAIL: TestNewHansardQuestions (0.00s)
-    --- FAIL: TestNewHansardQuestions/sad_#1 (0.00s)
-        hansard_integration_test.go:77: NewHansardQuestions() error = <nil>, wantErr true
-        hansard_integration_test.go:82: hansardQuestions mismatch (-want +got):
-              &[]hansard.HansardQuestion{
-                {
-                        QuestionNum:  "8",
-            -           PageNumStart: 11,
-            +           PageNumStart: 18,
-            -           PageNumEnd:   12,
-            +           PageNumEnd:   18,
-                },
-                {
-                        QuestionNum:  "9",
-            -           PageNumStart: 29,
-            +           PageNumStart: 19,
-            -           PageNumEnd:   30,
-            +           PageNumEnd:   11,
-                },
-    ...
-                {
-                        QuestionNum:  "15",
-            -           PageNumStart: 11,
-            +           PageNumStart: 30,
-            -           PageNumEnd:   12,
-            +           PageNumEnd:   36,
-                },
-                {QuestionNum: "19", PageNumStart: 37, PageNumEnd: 37},
-                {QuestionNum: "0", PageNumStart: 38, PageNumEnd: 39},
-              }
-    --- FAIL: TestNewHansardQuestions/sad_#2 (0.00s)
-        hansard_integration_test.go:77: NewHansardQuestions() error = <nil>, wantErr true
-FAIL
-FAIL    github.com/Sinar/go-dundocs/internal/hansard    0.012s
-FAIL
-
-```
 
 *  Custom Error (test new xerrors)
 
