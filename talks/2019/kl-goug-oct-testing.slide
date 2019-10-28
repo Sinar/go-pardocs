@@ -1,5 +1,62 @@
+Golang Meetup October 2019
+30 October 2019
+Tags: go, golang
 
-* Buzz corner 
+Michael Leow
+FOI Initiatives, Sinar Project
+leow@sinarproject.org
+https://www.sinarproject.org/
+@leowmjw
+https://github.com/Sinar/go-pardocs
+
+* Agenda
+
+- May 9, 2018 .. A New Harapan
+- What is a Hansard?
+- What is ParDocs?
+- What is Selangor State Assembly?
+- What is OSCv3?
+- Advanced: Camelot + Excalibur
+- Concepts
+- Resources
+- Q&A
+
+* May 9, 2018 .. A New Harapan
+
+.image assets/gopher-starwars-ashleymcnamara-small.png
+
+.caption _StarWars-Gopher_ by [[https://github.com/ashleymcnamara/gophers/blob/master/GOPHER_STAR_WARS.png][Ashley McNamara]]
+
+
+* What is a Hansard?
+
+- Previous: Only Spoken Questions are available online [[https://www.parlimen.gov.my/][Parliment]]
+- Previous: OKM minions needed to scan book of Written Answers 
+- Now: Written answers can be downloaded + Quality seems better (direct)
+
+.image assets/parlimen-gov-my.png
+
+: Hansard is the official record; inherited from the British
+: We had cases of pencil / pen marks to override numbering; not do clean
+: New Government - New document! - Old site :(
+
+* What is  ParDocs? [[ https://pardocs.sinarproject.org ]]
+
+- Originally written in Java, used iText library - [[https://github.com/leowmjw/parliamentMY-QA-blast][parliamentMY-QA-blast]]
+- Lots of Regexp; fragile, 80% success rate
+
+.image assets/pardocs.png
+
+: Long live Netbeans! Original parliamentMY-QA-blast 
+: Hansards are the official records of the debates + written questions
+: Broke with the new government as the structure changed and no longer worked with previous RegExp
+
+* What is Selangor State Assembly? [[ https://dewan.selangor.gov.my ]]
+
+- Laws under the state purview are discussed/passed
+
+.image assets/selangor-state-dewan.png
+
 
 * Hard things in computer science; how to name your scenaios?
 
@@ -51,7 +108,7 @@ With (at the  calling function, NOT in helper)
 
 ```
  === RUN   TestNewHansardQuestions/sad_#2
-...
+    ...
     --- FAIL: TestNewHansardQuestions/sad_#2 (0.00s)
         hansard_integration_test.go:43: NewHansardQuestions() error = <nil>, wantErr true
         hansard_integration_test.go:48: hansardQuestions mismatch (-want +got):
@@ -88,7 +145,7 @@ func TestNewDebateTOC(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := debate.NewDebateTOCPDFContent(loadPDFFromFixture(t, tt.args.fixtureLabel, tt.args.sourcePath))
-...
+    ...
 
 ```
 
@@ -102,9 +159,9 @@ pages:
   - 'Naskhah belum disemak '
   - 'PARLIMEN KEEMPAT BELAS '
   - 'PENGGAL KEDUA '
-...
+  ...
   pdftxtsamestyles:
-...
+  ...
   - '[Tepuk]'
   - ' Dewan Rakyat ini mempunyai kedudukan yang tertinggi dalam menentukan undang-undang
     negara dengan bertujuan memberikan manfaat terbesar kepada seluruh rakyat Malaysia.
@@ -145,7 +202,7 @@ Read More
 * Make the cases readbale; rearrange stuff:
 
 ```
-...
+    ...
 		{"case #3", args{
 			"HDOC-BukanLisan-1-20", "raw/BukanLisan/1 - 20.pdf",
 			&[]hansard.HansardQuestion{
@@ -178,7 +235,7 @@ Read More
 			},
 		}, true,
 		},
-..
+    ...
 ```
 
 Output:
@@ -206,7 +263,7 @@ $ gotest -v -run NewHansardQuestions/sad ./...
             -           PageNumEnd:   30,
             +           PageNumEnd:   11,
                 },
-...
+    ...
                 {
                         QuestionNum:  "15",
             -           PageNumStart: 11,
@@ -227,17 +284,18 @@ FAIL
 
 *  Custom Error (test new xerrors)
 
+Can check against  expected Error type;  if can do something about it ..
+
 Code:
-```
+
 	// If have badQuestionsCount; flag it; NOT fatal; but to be handled by caller
 	if badQuestionsCount > 0 {
 		return fmt.Errorf("NewHansardQuestions FAIL: %w", ErrorQuestionsHasInvalid{badQuestionsCount})
 	}
 
-```
 
 Handler:
-```
+
 			//  For errors; check out Error Type to see if it is  recoverable
 			if err != nil {
 				// Below does not work; apparently is not expression -> hansard.ErrorQuestionsHasInvalid. Why?
@@ -252,10 +310,22 @@ Handler:
 				}
 			}
 
-```
+
 
 Output:
 ```
+$ gotest -v -run NewHansardQuestions/sad ./...
+  === RUN   TestNewHansardQuestions
+  === RUN   TestNewHansardQuestions/sad_#1
+  RECOVERABLE:  Has 1 bad Questions!
+  === RUN   TestNewHansardQuestions/sad_#2
+  RECOVERABLE:  Has 3 bad Questions!
+  --- PASS: TestNewHansardQuestions (0.00s)
+      --- PASS: TestNewHansardQuestions/sad_#1 (0.00s)
+      --- PASS: TestNewHansardQuestions/sad_#2 (0.00s)
+  PASS
+  ok      github.com/Sinar/go-dundocs/internal/hansard    0.013s
+
 ```
 
 * TestMain
