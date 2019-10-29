@@ -20,12 +20,12 @@ https://www.sinarproject.org/
 - What is DUNDocs?
 - What is Selangor State Assembly?
 - What is State Assembly Hansard?
-- Strategy to plan + split document
-- What is OSCv3?
-- Advanced: Camelot + Excalibur
-- Concepts
-- Resources
+- Strategy for Splitting
+- Testing in Old Days
+- Testing Patterns Tried
+- Learnings
 - Q&A
+- Resources
 
 * May 9, 2018 .. A New Harapan
 
@@ -37,17 +37,13 @@ https://www.sinarproject.org/
 
 - DUN - Dewan Undangan Negeri (State Assembly)
 - Empower the tax payers to have Open Data what rep ask on your behalf
-- Objective: Split by Type, Questions and make it searchble (see pardocs.sinarproject.org)
+- Objective: Split by Type, Questions and make it searchable (see pardocs.sinarproject.org)
 
 .image assets/pardocs.png
 
-: Long live Netbeans! Original parliamentMY-QA-blast 
-: Hansards are the official records of the debates + written questions
-: Broke with the new government as the structure changed and no longer worked with previous RegExp
-
 * What is Selangor State Assembly? [[ https://dewan.selangor.gov.my ]]
 
-- Laws under the state purview are discussed/passed
+- Laws under the state purview are discussed and passed
 - Example: Forestry, Local Authorities, Religion, Licenses, Sand/Mineral.
 - Lots of docs; not as powerful as Federal,
 
@@ -76,17 +72,17 @@ Can auto detect of type
 
 .image assets/go-dundocs-strategy-big.png
 
+* OG Testing
 
-* Testing in old days (PHP)
-
-- Started by wrting outside in; CLI; now reverse
+- Started by writing outside in; CLI; now reverse
 - Delve sanyone?
-- Println .. Still do ...
+- Println Debugging (still do)
 - CLI one way to interface (e.g. REST, gRPC, message pidgeon)
 
 : CLI can be left last; as it is just one way to interface
 : Can use
 : REST server might be abnother way to interact; should not matter
+: Testing in old days
 
 * Testing Patterns Tried
 
@@ -194,6 +190,20 @@ Safely hide internal APIs while discovery phase
 : Structure the test knowing relative to the test is testdata folder
 : helper functions ensure no extra noise
 
+* Built-in: Package namespace to separate unit + integration test
+
+package hansard <-- Unit tests
+
+package hansard_test <-- Integration test
+
+Forces to test via exported interface
+
+Once stabilized, elevate from internal to external
+
+* Built-in: testdata Folder
+
+.image assets/go-dundocs-testdata.png
+
 * Built-in: Helper function
 Use t.Helper for more accuracy
 
@@ -215,9 +225,8 @@ With (at the  calling function, NOT in helper):
         --- FAIL: TestNewHansardQuestions/case_#1 (0.00s)
             hansard_integration_test.go:40: die!
 
-* Built-in:
-Run test by matching patterns
-Example: Run  only sad cases
+* Built-in: Run subsets if tests
+Run test by matching patterns. Example: Run only "sad cases"
 
     $ gotest -v -run Question/sad ./...
     === RUN   Test_isStartOfQuestionSection
@@ -232,8 +241,15 @@ Example: Run  only sad cases
 
 : Case above crosses unit + integration
 
-* How Test Help in PDF Phase
-Helped catch change in PDF library version
+* Learnings: How Test Help in PDF Phase
+Helped catch changes in PDF library version
+
+Will help later in refactoring, at the moment:
+    - Only use row (same line) data
+    - Future need to extract per column or per style
+
+Needed to come up with a way to not weigh down the repo with MBs of PDFs
+    --> PDF Fixture stored as YAML
 
 : Tried a different method + libraries
 : Does not come out correctly
@@ -263,9 +279,9 @@ YAML:
         institusi ini. '
     sourcepath: testdata/DR-01072019.pdf
 
-: YAML is a pain in Kubernetes
+: YAML is a pain in Kubernetes, but it has some uses
 
-* Technique:Fixture
+* Technique: Fixture
 
 Fixture test; boil down PDFs into YAML
 
@@ -289,7 +305,7 @@ Fixture test; boil down PDFs into YAML
 
 : naming is hard!
 
-* How Test Help in Plan Phase
+* Learnings: How Test Help in Plan Phase
 
 Load fixture of PDF representation in YAML
 
@@ -301,17 +317,49 @@ Load fixture of PDF representation in YAML
 			got := hansard.HansardDocument{StateAssemblySession: "testSessionName"}
 			err := hansard.NewHansardDocumentContent(pdfDoc, &got)
 
+Sample PDF Fixture to test edge cases
+
+		{"sad #1", args{
+			"Bad-HDOC-Lisan-1-20", "raw/Lisan/SOALAN MULUT (1-20).pdfa",
+			&[]hansard.HansardQuestion{
+				{"8", 18, 18}, // This simulates scanned pages messed up ordering
+				{"9", 19, 11}, // This is to simulate messing the ordering in PDFs
+				{"5", 12, 13},
+
+* Unit Tests for RegExp Coverage
+
+    func Test_isStartOfQuestionSection(t *testing.T)
+		{"happy #4", args{[]string{"� Perayaan Pesta Ponggal Peringkat Negeri Selangor  ",
+		    "PERTANYAAN-PERTANYAAN BERTULIS DARIPADA ", "Y.B. PUAN JUWAIRIYA BINTI ZULKIFLI  ",
+		    "(N10 BUKIT MELAWATI) ", "TAJUK : MUZIUM PERMAINAN TRADISIONAL RAKYAT DI BUKIT MALAWATI ",
+		    "8.   Bertanya kepada Y.A.B. Dato'' Menteri Besar:- ",
+		    "a)         Apakah status muzium permainan tradisional\n rakyat di Bukit Malawati \nkerana ", "menyediakan gunatenaga dan pendapatan Negeri Selangor. Berdasarkan ", "ii. Pembangunan semula Kesultanan Awal Negeri Selangor dan ", "Selangor yang dibuka seawal tahun 1700an. Ianya berpusat di Bukit ", "Jugra yang telah dibuka kepada pelawat mulai tahun 2004 yang lalu. ", "Almathum Sultan Ala’edin Sulaiman Shah. Walau� bagaimanapun 3,000 orang"}}, true}
+		{"sad #2", args{[]string{"BIL DAERAH MUKIM ", "LUAS ", "(HEKTAR) ", "7 Ulu Tinggi 9.4157 Ternakan ayam PKPS ",
+		    "8 ", "Ulu Yam 80.39 Ladang Kelapa Sawit PKPS   ", "9 Kerling 374.9 ", "Kerling PKPS "}}, false}
 
 
-* How Test Help in Split Phase
-Can have weird plans
-Can habdle reported casse of pardocs; filenames with '.' in it
-Combined multiple helper functions; PDF, Plan
+    func Test_extractQuestionNum(t *testing.T)
+		{"happy #2", args{" � 50 bertanya kepada yab menteri besar Azmin ALI "}, "50", false},
+		{"happy odd #3", args{"  01)   Bertanya kepada Y.A.B. "}, "01", false},
+		{"sad #1", args{"TAJUK : PERUNTUKAN CERIA 2019 "}, "", false},
+
+    func Test_detectHansardType(t *testing.T)
+		{"happy #2", args{PDFPage{PDFTxtSameLines: []string{"PERTANYAAN-PERTANYAAN BERTULIS DARIPADA ", "(N43 SEMENTA) ",
+		    "TAJUK : BANTUAN SKIM CERIA", "'2.   Bertanya kepada Y.A.B. Dato'' Menteri Besar:- "}}}, HANSARD_WRITTEN},
+		{"not quite #1", args{PDFPage{PDFTxtSameLines: []string{"YAB Yeo", "PerTANYAAN mengenai Sampah yang dibuang"}}},
+		    HANSARD_INVALID},
+
+: talk about how to cover all the edge cases around
+: Easy dream up new conbination and odd ones to cover the edge
+
+* Learnings: How Test Help in Split Phase
+Can structure weird plans and see how it gets handled
+Can simulate reported error handling PDFs has filenames with '.'
+Combined multiple helper functions: PDF, Plan
 
 * Technique: Golden Snapshot
 
-    gotest -updateSplitterGolden -run ^TestNewSplitHansardDocumentP
-    lan$ 
+    gotest -updateSplitterGolden -run ^TestNewSplitHansardDocumentPlan$
 
 Code:
 
@@ -361,7 +409,7 @@ Use update flag to persist and "eyeball" it!
         ...
     }
 
-* All Together Now!
+* Learnings: All Together Now!
 
 Expose only the top level action; implementation hidden
 
@@ -374,7 +422,6 @@ Expose only the top level action; implementation hidden
 
     func TestParliamentDocs_Plan(t *testing.T) {
     ...
-            // Too huge!!
             {"test #1", &pardocs.ParliamentDocs{pardocs.Configuration{
                 "par14sesi1", hansard.HANSARD_SPOKEN,
                 ".", "./raw/Lisan/JDR12032019.pdf", 
@@ -397,9 +444,10 @@ Expose only the top level action; implementation hidden
                 // Execute split
                 pd.Split()
 
-*  Failed Experiments: Custom Error (new 1.13)
+*  Learnings: Failed: Custom Error (new 1.13)
 
-More context 
+Better test is to catch more specific error and handle
+
 Code:
 
 	// If have badQuestionsCount; flag it; NOT fatal; but to be handled by caller
@@ -422,19 +470,11 @@ Handler:
 				} 
 			}
 
-: Can check against  expected Error type;  if can do something about it ..
+: Can check against expected Error type;  if can do something about it ..
 
-* Moar Test Tips
+* Moar Test Tools + Tips
 
-- TestMain
 .link https://www.calhoun.io/how-to-test-with-go/
-- Short Test
-    * testing.Short()
-- Examples
-    * Prefix testname with Example
-- Colorful tests
 .link https://github.com/rakyll/gotest
-- Careful with t.Parallel
-- Learn go with Tests (cxreator of go mocikingjay))    
-    
+.link https://quii.gitbook.io/learn-go-with-tests/
 
