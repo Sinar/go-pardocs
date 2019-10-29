@@ -1,24 +1,27 @@
-Golang Meetup September 2019
-23 September 2019
+Golang Meetup October 2019
+29 October 2019
 Tags: go, golang
 
 Golang Malaysia
 
-* Current version
+* Next version (3 months)
 
-1.13
+1.14
 
-Released 2019/09/03
+- proposal: spec: allow embedding overlapping interfaces
+- proposal: regexp: add (*Regexp).SubexpIndex
+- auto use of vendor in modules mode
+- Remove SSLv3 support
+- TLS 1.3 opt out
+- Simple static build with -static
 
-- The go command now downloads and authenticates modules using the Go module mirror and Go checksum database by default
-- Improvements to number literals
-- Error wrapping
-- TLS 1.3 on by default
-- Improved modules support
 
-Full release notes
+Try out:
 
-.link https://golang.org/doc/go1.13
+    $ go get golang.org/dl/gotip
+    $ gotip download
+
+.link https://docs.google.com/presentation/d/1HfIwlVTmVWQk94OLKfTGvXpQxyp0U4ywG1u5j2tjiuE/mobilepresent?slide=id.g57812b4045_0_66
 
 * Buzz Corner
 
@@ -28,43 +31,12 @@ CPython extension module from a go package
 
 .link https://github.com/go-python/gopy
 
-* gorilla/websocket
-
-v1.4.1 fixes potential DoS vector, please upgrade
-
-.link https://github.com/gorilla/websocket/releases
-
-* Dgraph
-
-v1.1.0
-
-.link https://github.com/dgraph-io/dgraph/releases
-
-* GoLand 2019.3 Early Access
-
-.link https://blog.jetbrains.com/go/2019/09/12/goland-2019-3-opens-its-eap/
-
-* TinyGo
-
-LLVM backend
-
-v0.8.0
-
-.link https://github.com/tinygo-org/tinygo/releases/tag/v0.8.0
-
 * fasthttp
 
 v1.5.0
 
 .link https://github.com/valyala/fasthttp/releases
 
-* Traefik
-
-Edge router
-
-v2.0
-
-.link https://blog.containo.us/traefik-2-0-6531ec5196c2
 
 * Articles
 
@@ -79,9 +51,7 @@ Tracking Down "Memory Leak" in a Go Microservice
 
 * Talk
 
-* Parallelism in Golang and How it works in Mudah.my
-
-By Ashraful
+* Deep dive testing in go-dundocs
 
 * Tips and Tricks
 

@@ -1,4 +1,4 @@
-Golang Meetup October 2019
+Deep dive testing in go-dundocs
 30 October 2019
 Tags: go, golang
 
@@ -8,18 +8,18 @@ FOI Initiatives, Sinar Project
 leow@sinarproject.org
 @leowmjw
 
-https://talks.godoc.org/github.com/sinar/go-pardocs/talks/2019/kl-goug-oct-testing.slide [PREZ]
+https://talks.godoc.org/github.com/sinar/go-pardocs/talks/2019/kl-goug-oct-testing.slide
 
-https://github.com/Sinar/go-dundocs [CODE]
+https://github.com/Sinar/go-dundocs
 
 https://www.sinarproject.org/
 
 * Agenda
 
 - May 9, 2018 .. A New Harapan
-- What is a Hansard?
-- What is ParDocs?
+- What is DUNDocs?
 - What is Selangor State Assembly?
+- What is State Assembly Hansard?
 - Strategy to plan + split document
 - What is OSCv3?
 - Advanced: Camelot + Excalibur
@@ -36,8 +36,8 @@ https://www.sinarproject.org/
 * What is DUNDocs?
 
 - DUN - Dewan Undangan Negeri (State Assembly)
-- Empower the tx payer to have Open Data what rep ask on your behalf
-- Objective: SPlit by Type, Questions and make it searchble (see PaRDOCS)
+- Empower the tax payers to have Open Data what rep ask on your behalf
+- Objective: Split by Type, Questions and make it searchble (see pardocs.sinarproject.org)
 
 .image assets/pardocs.png
 
@@ -48,22 +48,10 @@ https://www.sinarproject.org/
 * What is Selangor State Assembly? [[ https://dewan.selangor.gov.my ]]
 
 - Laws under the state purview are discussed/passed
-- : Forestyr, Local Authorirties, Religion, License, Sand, Mineral.
+- Example: Forestry, Local Authorities, Religion, Licenses, Sand/Mineral.
 - Lots of docs; not as powerful as Federal,
 
 .image assets/selangor-state-dewan.png
-
-* What is a Hansard?
-
-- Previous: Only Spoken Questions are available online [[https://www.parlimen.gov.my/][Parliment]]
-- Previous: OKM minions needed to scan book of Written Answers
-- Now: Written answers can be downloaded + Quality seems better (direct)
-
-.image assets/parlimen-gov-my.png
-
-: Hansard is the official record; inherited from the British
-: We had cases of pencil / pen marks to override numbering; not do clean
-: New Government - New document! - Old site :(
 
 * What is State Assembly Hansard?
 
@@ -71,7 +59,14 @@ Have Spoken + Written
 
 Question is embedded into  document
 
-Howerver, we also can have auto detect of type
+Can auto detect of type
+
+.image assets/dun-hansard.png 350 600
+
+
+: Hansard is the official record; inherited from the British
+: We had cases of pencil / pen marks to override numbering; not do clean
+: New Government - New document! - Old site :(
 
 * Strategy for Splitting
 
@@ -95,9 +90,58 @@ Howerver, we also can have auto detect of type
 
 * Testing Patterns Tried
 
+- Table-testing
 - Use go-cmp!
 - Structure in code
 - Utilize built-in test capabilities
+
+* Technique: Table-testing
+Able to invent weird scenarios otherwise not easily done:
+
+		{"case #3", args{
+			"HDOC-BukanLisan-1-20", "raw/BukanLisan/1 - 20.pdf", &[]hansard.HansardQuestion{
+				{"1", 1, 1},
+				{"2", 2, 2},
+				{"3", 3, 5},
+		    },
+		}, false},
+		{"sad #1", args{
+			"Bad-HDOC-Lisan-1-20", "raw/Lisan/SOALAN MULUT (1-20).pdfa", &[]hansard.HansardQuestion{
+				{"8", 11, 12},
+				{"9", 29, 30},
+				{"5", 32, 33},
+				{"6", 11, 12},
+				{"10", 29, 30},
+				{"10", 32, 33},
+				{"15", 11, 12},
+				{"19", 37, 37},
+				{"0", 38, 39},
+			},
+		}, true},
+
+* Technique: Table-testing (Part 2)
+
+Output:
+
+    $ gotest -v -run NewHansardQuestions/sad ./...
+    --- FAIL: TestNewHansardQuestions (0.00s)
+            hansard_integration_test.go:82: hansardQuestions mismatch (-want +got):
+                  &[]hansard.HansardQuestion{
+                    {
+                            QuestionNum:  "8",
+                -           PageNumStart: 11,
+                +           PageNumStart: 18,
+                -           PageNumEnd:   12,
+                +           PageNumEnd:   18,
+                    },
+                    {
+                            QuestionNum:  "9",
+                -           PageNumStart: 29,
+                +           PageNumStart: 19,
+                -           PageNumEnd:   30,
+                +           PageNumEnd:   11,
+                    },
+        --- FAIL: TestNewHansardQuestions/sad_#2 (0.00s)
 
 * go-cmp Is Awesome!
 
@@ -171,6 +215,23 @@ With (at the  calling function, NOT in helper):
         --- FAIL: TestNewHansardQuestions/case_#1 (0.00s)
             hansard_integration_test.go:40: die!
 
+* Built-in:
+Run test by matching patterns
+Example: Run  only sad cases
+
+    $ gotest -v -run Question/sad ./...
+    === RUN   Test_isStartOfQuestionSection
+    === RUN   Test_isStartOfQuestionSection/sad_#1
+    === RUN   Test_isStartOfQuestionSection/sad_#2
+    === RUN   Test_extractQuestionNum
+    === RUN   Test_extractQuestionNum/sad_#1
+    === RUN   Test_extractQuestionNum/sad_#2
+    === RUN   TestNewHansardQuestions
+    === RUN   TestNewHansardQuestions/sad_#1
+    === RUN   TestNewHansardQuestions/sad_#2
+
+: Case above crosses unit + integration
+
 * How Test Help in PDF Phase
 Helped catch change in PDF library version
 
@@ -202,142 +263,143 @@ YAML:
         institusi ini. '
     sourcepath: testdata/DR-01072019.pdf
 
+: YAML is a pain in Kubernetes
+
+* Technique:Fixture
+
+Fixture test; boil down PDFs into YAML
+
+		// We expect QuestionNum of "0" for pages with some marker but could NOT recognize question number!
+		{"sad #2", args{
+			"Bad-HDOC-BukanLisan-1-20", "raw/BukanLisan/1 - 20b.pdf",
+			&[]hansard.HansardQuestion{
+				{"0", 11, 12},
+				{"0", 29, 30},
+				{"0", 32, 33},
+			},
+		}, true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pdfDoc := samplePDFFromFixture(t, tt.args.fixtureLabel, tt.args.pdfPath)
+			hansardQuestions := make([]hansard.HansardQuestion, 0, 20)
+			// Run function  ..
+			err := hansard.NewHansardQuestions(pdfDoc, &hansardQuestions)
+
+: naming is hard!
+
 * How Test Help in Plan Phase
 
-* Technique: Table-testing
-Able to invent weird scenarios otherwise not easily done:
+Load fixture of PDF representation in YAML
 
-		{"case #3", args{
-			"HDOC-BukanLisan-1-20", "raw/BukanLisan/1 - 20.pdf", &[]hansard.HansardQuestion{
-				{"1", 1, 1},
-				{"2", 2, 2},
-				{"3", 3, 5},
-		    },
-		}, false},
-		{"sad #1", args{
-			"Bad-HDOC-Lisan-1-20", "raw/Lisan/SOALAN MULUT (1-20).pdfa", &[]hansard.HansardQuestion{
-				{"8", 11, 12},
-				{"9", 29, 30},
-				{"5", 32, 33},
-				{"6", 11, 12},
-				{"10", 29, 30},
-				{"10", 32, 33},
-				{"15", 11, 12},
-				{"19", 37, 37},
-				{"0", 38, 39},
-			},
-		}, true},
+		t.Run(tt.name, func(t *testing.T) {
+			// Load Fixture for test
+			pdfDoc := loadPDFFromFixture(t, tt.args.fixtureLabel, tt.args.pdfPath)
+			// DEBUG
+			//spew.Dump(pdfDoc)
+			got := hansard.HansardDocument{StateAssemblySession: "testSessionName"}
+			err := hansard.NewHansardDocumentContent(pdfDoc, &got)
 
-* Technique: Table-testing (Part 2)
 
-Output:
-
-    $ gotest -v -run NewHansardQuestions/sad ./...
-    --- FAIL: TestNewHansardQuestions (0.00s)
-            hansard_integration_test.go:82: hansardQuestions mismatch (-want +got):
-                  &[]hansard.HansardQuestion{
-                    {
-                            QuestionNum:  "8",
-                -           PageNumStart: 11,
-                +           PageNumStart: 18,
-                -           PageNumEnd:   12,
-                +           PageNumEnd:   18,
-                    },
-                    {
-                            QuestionNum:  "9",
-                -           PageNumStart: 29,
-                +           PageNumStart: 19,
-                -           PageNumEnd:   30,
-                +           PageNumEnd:   11,
-                    },
-        --- FAIL: TestNewHansardQuestions/sad_#2 (0.00s)
 
 * How Test Help in Split Phase
 Can have weird plans
 Can habdle reported casse of pardocs; filenames with '.' in it
+Combined multiple helper functions; PDF, Plan
 
-* Hard things in computer science; how to name your scenaios?
+* Technique: Golden Snapshot
 
-:emoji: shrug .. :man_shrugging :woman_shrugging :woman_shrugging:
+    gotest -updateSplitterGolden -run ^TestNewSplitHansardDocumentP
+    lan$ 
 
-can run test match pattern -run .*/happy.*
+Code:
 
-* Test public interface for API; you'll maintain!
+			// Save the Plan for use by LoadPLan
+			goldenLabel := "plan-sample-" + tt.args.fixtureLabel
+			want := hansard.SplitHansardDocumentPlan{
+				HansardDocument: hansard.HansardDocument{
+					StateAssemblySession: confDUNSession,
+					HansardQuestions:     []hansard.HansardQuestion{},
+				},
+			}
+			if *updateSplitterGolden {
+				loadPlanFromGolden(t, goldenLabel, &got.HansardDocument)
+				want.HansardDocument = got.HansardDocument
+			} else {
+				// load from cache ..
+				var wantHansardDocument hansard.HansardDocument
+				loadPlanFromGolden(t, goldenLabel, &wantHansardDocument)
+				want.HansardDocument = wantHansardDocument
+			}
 
-* Use _test for private function/method; use integration_test for APIs that are public (within or without package) ..
+: Use the flag to trigger
 
-* Use internal to hide APIs while evovling
-
-* Use testdata for Fixtures, Golden image
-
-* Test cases; table
-
-It  uses t.Run; probably avoid t,.Parallel?
-
-* Golden image, fixture patterns
+* Technique: Golden Snapshot (Implementation)
 
 Use update flag to persist and "eyeball" it!
 
+    // Loader Plan for use in ExecuteSplit
+    func loadPlanFromGolden(t *testing.T, goldenLabel string, hansardDoc *hansard.HansardDocument) {    
+        // Read from cache; if not exist; complain that need to update
+        goldenPath := filepath.Join("testdata", goldenLabel+".golden")
+        if *updateSplitterGolden {
+            w, werr := yaml.Marshal(hansardDoc)
+            ioutil.WriteFile(goldenPath, w, 0644)
+        }
+        golden, rerr := ioutil.ReadFile(goldenPath)
+        if rerr != nil {
+            if os.IsNotExist(rerr) {
+                t.Fatalf("Ensure run with flag -updateSplitterGolden first time! ERR: %s", rerr.Error())
+            }
+            t.Fatalf("Unexpected error: %s", rerr.Error())
+        }
+        umerr := yaml.Unmarshal(golden, hansardDoc)
+        if umerr != nil {
+            t.Fatalf("Unmarshal FAIL: %s", umerr.Error())
+        }
+        ...
+    }
 
-* Fixture test; boil down PDFs into YAML
+* All Together Now!
 
-Use a descriptive label; where original data is; use Makefile to download original??
+Expose only the top level action; implementation hidden
 
-```
-func TestNewDebateTOC(t *testing.T) {
-	type args struct {
-		fixtureLabel string
-		sourcePath   string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		{"Missing TOC", args{"TOC-Bad-DR-DewanSelangor", "testdata/Bad-DR-DewanSelangor.pdf"}, true},
-		{"TOC empty page2", args{"TOC-DR-01072019", "testdata/DR-01072019.pdf"}, false},
-		{"TOC normal #1", args{"TOC-DR-11042019", "testdata/DR-11042019.pdf"}, false},
-		{"TOC normal #2", args{"TOC-DR-01072019_new", "testdata/DR-01072019_new.pdf"}, false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := debate.NewDebateTOCPDFContent(loadPDFFromFixture(t, tt.args.fixtureLabel, tt.args.sourcePath))
+.image assets/go-dundocs-combined.png 520 500
+
+: Can run without CLI; via test fully
+: Show the go-pardocs example
+
+* Implementation (go-pardocs)
+
+    func TestParliamentDocs_Plan(t *testing.T) {
+    ...
+            // Too huge!!
+            {"test #1", &pardocs.ParliamentDocs{pardocs.Configuration{
+                "par14sesi1", hansard.HANSARD_SPOKEN,
+                ".", "./raw/Lisan/JDR12032019.pdf", 
+                pardocs.PLAN}}}, }
+        for _, tt := range tests {
+            t.Run(tt.name, func(t *testing.T) {
+                ...
+                tt.pd.Plan()    
+                // Let's check
+                plan := hansard.LoadSplitHansardDocPlanFromFile(tt.pd.Conf.HansardType, tt.pd.Conf.WorkingDir, tt.pd.Conf.SourcePDFPath)
     ...
 
-```
+    func TestParliamentDocs_Split(t *testing.T) {
+    ...
+            {"test #1", fields{"happy1", pardocs.Configuration{"par14sesi1", 
+            hansard.HANSARD_SPOKEN, ".", "./raw/Lisan/JDR12032019.pdf", pardocs.SPLIT}}}, }
+            ...
+                ferr := hansard.SetupSplitPlanFixture(dir, absFixtureDirPath, tt.fields.scenarioDir,
+                    absSourcePDFPath, tt.fields.Conf.HansardType)
+                // Execute split
+                pd.Split()
 
+*  Failed Experiments: Custom Error (new 1.13)
 
-* Why YAML; what did i try else?
-
-Dimple
-Sturcute; you don;t have to worry about the weird YAML stuff (hopefully libs handle)
-Easy to diff with go-cmp once it is in struct
-Tried;  but  hard to show diff ..
-
-* Run test by matching patterns; case below crosses unit + integration
-
-```
-$ gotest -v -run Question/sad ./...
-=== RUN   Test_isStartOfQuestionSection
-=== RUN   Test_isStartOfQuestionSection/sad_#1
-=== RUN   Test_isStartOfQuestionSection/sad_#2
-=== RUN   Test_extractQuestionNum
-=== RUN   Test_extractQuestionNum/sad_#1
-=== RUN   Test_extractQuestionNum/sad_#2
-=== RUN   TestNewHansardQuestions
-=== RUN   TestNewHansardQuestions/sad_#1
-=== RUN   TestNewHansardQuestions/sad_#2
-
-```
-
-Read More
-
-
-
-*  Custom Error (test new xerrors)
-
-Can check against  expected Error type;  if can do something about it ..
-
+More context 
 Code:
 
 	// If have badQuestionsCount; flag it; NOT fatal; but to be handled by caller
@@ -357,42 +419,22 @@ Handler:
 				errQInvalid, ok := errors.Unwrap(err).(hansard.ErrorQuestionsHasInvalid)
 				if ok {
 					fmt.Println("RECOVERABLE: ", errQInvalid.Error())
-				} else {
-					// Is more serious error?
-				}
+				} 
 			}
 
+: Can check against  expected Error type;  if can do something about it ..
 
+* Moar Test Tips
 
-Output:
-```
-$ gotest -v -run NewHansardQuestions/sad ./...
-  === RUN   TestNewHansardQuestions
-  === RUN   TestNewHansardQuestions/sad_#1
-  RECOVERABLE:  Has 1 bad Questions!
-  === RUN   TestNewHansardQuestions/sad_#2
-  RECOVERABLE:  Has 3 bad Questions!
-  --- PASS: TestNewHansardQuestions (0.00s)
-      --- PASS: TestNewHansardQuestions/sad_#1 (0.00s)
-      --- PASS: TestNewHansardQuestions/sad_#2 (0.00s)
-  PASS
-  ok      github.com/Sinar/go-dundocs/internal/hansard    0.013s
-
-```
-
-* TestMain
-    -  can setup [see 1 below](1)
+- TestMain
+.link https://www.calhoun.io/how-to-test-with-go/
+- Short Test
+    * testing.Short()
+- Examples
+    * Prefix testname with Example
+- Colorful tests
+.link https://github.com/rakyll/gotest
+- Careful with t.Parallel
+- Learn go with Tests (cxreator of go mocikingjay))    
     
-* Short Test
-    - testing.Short()
-    
-* Examples
-    - ExmapleXYZ    
-
-Moar Testing Resources
-- [1] https://www.calhoun.io/how-to-test-with-go/
-
-[2] https://github.com/rakyll/gotest  - Fancy go test (with moar colors!!)
-
-[3] learn go with test 
 
