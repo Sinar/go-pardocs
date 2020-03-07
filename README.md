@@ -21,7 +21,7 @@ Example:
 
 ### Splitting
 ```bash
-$ ./go-pardocs split 
+$ ./go-pardocs split -session par14sesi1 -type BL <file>
 
 ```
 ## Output
@@ -32,6 +32,33 @@ README.md                           par14sesi1-soalan-BukanLisan-4.pdf
 par14sesi1-soalan-BukanLisan-1.pdf  par14sesi1-soalan-BukanLisan-5.pdf
 par14sesi1-soalan-BukanLisan-2.pdf  par14sesi1-soalan-BukanLisan-6.pdf
 ...
+```
+
+### Splitting with optional date prefix
+Example: Parlimen 14 Sesi 2 Mesyuarat 3; 04 Disember  2019 
+
+Run the plan
+```bash
+$ ./go-pardocs plan -session 20191204-par14sesi2mesy3 -type L ./raw/Lisan/JDR04122019.pdf
+```
+Split with the date prefix in session parameter
+```bash
+$ ./go-pardocs split -session 20191204-par14sesi2mesy3 -type L ./raw/Lisan/JDR04122019.pdf
+```
+## Output
+```bash
+$ ls ./splitout
+20191204-par14sesi2mesy3-soalan-Lisan-1.pdf
+20191204-par14sesi2mesy3-soalan-Lisan-10.pdf
+20191204-par14sesi2mesy3-soalan-Lisan-11.pdf
+20191204-par14sesi2mesy3-soalan-Lisan-12.pdf
+20191204-par14sesi2mesy3-soalan-Lisan-13.pdf
+...
+20191204-par14sesi2mesy3-soalan-Lisan-6.pdf
+20191204-par14sesi2mesy3-soalan-Lisan-7.pdf
+20191204-par14sesi2mesy3-soalan-Lisan-8.pdf
+20191204-par14sesi2mesy3-soalan-Lisan-9.pdf
+
 ```
 
 ## IMPORTANT!
