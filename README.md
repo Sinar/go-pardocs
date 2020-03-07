@@ -36,13 +36,14 @@ par14sesi1-soalan-BukanLisan-2.pdf  par14sesi1-soalan-BukanLisan-6.pdf
 
 ### Splitting with optional date prefix
 Example: Parlimen 14 Sesi 2 Mesyuarat 3; 04 Disember  2019 
-```
+
+Run the plan
+```bash
 $ ./go-pardocs plan -session 20191204-par14sesi2mesy3 -type L ./raw/Lisan/JDR04122019.pdf
 ```
-
+Split with the date prefix in session parameter
 ```bash
 $ ./go-pardocs split -session 20191204-par14sesi2mesy3 -type L ./raw/Lisan/JDR04122019.pdf
-
 ```
 ## Output
 ```bash
