@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/davecgh/go-spew v1.1.1
-	github.com/google/go-cmp v0.4.0
+	github.com/google/go-cmp v0.5.0
 	github.com/google/subcommands v1.2.0
 	github.com/hhrutter/pdfcpu v0.1.25
 	github.com/ledongthuc/pdf v0.0.0-20190830105003-8ac343ec9fdd
