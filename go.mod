@@ -10,5 +10,5 @@ require (
 	github.com/ledongthuc/pdf v0.0.0-20190830105003-8ac343ec9fdd
 	github.com/sanity-io/litter v1.2.0
 	github.com/y0ssar1an/q v1.0.10
-	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v2 v2.3.0
 )
