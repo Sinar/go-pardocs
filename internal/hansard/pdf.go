@@ -79,7 +79,7 @@ func (pdfDoc *PDFDocument) extractPDF() error {
 				fmt.Println("**WILL IGNORE!!!! *****")
 				continue
 			}
-			return fmt.Errorf(" GetPlainText ERROR: %w", pt)
+			return fmt.Errorf(" GetPlainText ERROR: %w", pterr)
 		}
 		pdfPage.PDFPlainText = pt
 		// processStyleChanges ..

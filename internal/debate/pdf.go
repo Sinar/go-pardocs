@@ -93,13 +93,13 @@ func (pdfDoc *PDFDocument) extractPDFStylesOnly(options *ExtractPDFOptions) erro
 		if p.V.IsNull() {
 			continue
 		}
-		pt, pterr := p.GetPlainText(nil)
+		_, pterr := p.GetPlainText(nil)
 		if pterr != nil {
 			if pterr.Error() == "malformed PDF: reading at offset 0: stream not present" {
 				fmt.Println("**WILL IGNORE!!!! *****")
 				continue
 			}
-			return fmt.Errorf(" GetPlainText ERROR: %w", pt)
+			return fmt.Errorf(" GetPlainText ERROR: %w", pterr)
 		}
 
 		// Top 10
@@ -151,13 +151,13 @@ func (pdfDoc *PDFDocument) extractPDFLinesOnly(options *ExtractPDFOptions) error
 		if p.V.IsNull() {
 			continue
 		}
-		pt, pterr := p.GetPlainText(nil)
+		_, pterr := p.GetPlainText(nil)
 		if pterr != nil {
 			if pterr.Error() == "malformed PDF: reading at offset 0: stream not present" {
 				fmt.Println("**WILL IGNORE!!!! *****")
 				continue
 			}
-			return fmt.Errorf(" GetPlainText ERROR: %w", pt)
+			return fmt.Errorf(" GetPlainText ERROR: %w", pterr)
 		}
 
 		// Top 10 lines for this page by line analysis
@@ -217,13 +217,13 @@ func (pdfDoc *PDFDocument) extractPDF(options *ExtractPDFOptions) error {
 			continue
 		}
 		// copy over plain text; short form
-		pt, pterr := p.GetPlainText(nil)
+		_, pterr := p.GetPlainText(nil)
 		if pterr != nil {
 			if pterr.Error() == "malformed PDF: reading at offset 0: stream not present" {
 				fmt.Println("**WILL IGNORE!!!! *****")
 				continue
 			}
-			return fmt.Errorf(" GetPlainText ERROR: %w", pt)
+			return fmt.Errorf(" GetPlainText ERROR: %w", pterr)
 		}
 		// NO need this ,.
 		//pdfPage.PDFPlainText = pt
