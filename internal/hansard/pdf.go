@@ -75,11 +75,14 @@ func (pdfDoc *PDFDocument) extractPDF() error {
 		// copy over plain text; short form
 		pt, pterr := p.GetPlainText(nil)
 		if pterr != nil {
-			if pterr.Error() == "malformed PDF: reading at offset 0: stream not present" {
-				fmt.Println("**WILL IGNORE!!!! *****")
-				continue
-			}
-			return fmt.Errorf(" GetPlainText ERROR: %w", pterr)
+			// DEBUG
+			//fmt.Println("Uncaught ERROR: " , pterr.Error() , " .. IGNORE!!!")
+			// For non-text Page, just append an empty one; useful for split
+			fmt.Println("Append Non-Text Page: ", i)
+			pdfPage.PDFTxtSameLines = make([]string, 0, 20)
+			pdfPage.PDFTxtSameStyles = make([]string, 0, 20)
+			pdfPages = append(pdfPages, pdfPage)
+			continue
 		}
 		pdfPage.PDFPlainText = pt
 		// processStyleChanges ..
